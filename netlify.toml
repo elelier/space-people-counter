@@ -1,0 +1,15 @@
+# Configuración para Netlify
+[build]
+  command = "bun run build"
+  publish = ".next"
+
+[functions]
+  # Permite que las funciones serverless tengan un tiempo de ejecución más largo
+  node_bundler = "esbuild"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[images]
+  # Permitir la carga de imágenes remotas
+  remote_images = ["https://same-assets.com/.*", "https://ext.same-assets.com/.*", "https://upload.wikimedia.org/.*"]
