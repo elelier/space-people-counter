@@ -1,0 +1,27 @@
+{
+  "name": "Space People Counter",
+  "short_name": "Space People",
+  "description": "Contador en tiempo real de personas en el espacio exterior",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070d1b",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "100x100",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "utilities"],
+  "lang": "es",
+  "scope": "/",
+  "id": "space-people-counter"
+}
