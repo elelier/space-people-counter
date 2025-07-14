@@ -31,8 +31,8 @@ const fallbackData: SpaceData = {
 
 export async function getPeopleInSpace(): Promise<SpaceData> {
   try {
-    // Primero intentar la API real
-    const response = await fetch('http://api.open-notify.org/astros.json', {
+    // Primero intentar la API real con HTTPS
+    const response = await fetch('https://api.open-notify.org/astros.json', {
       next: { revalidate: 300 }, // Cache por 5 minutos
     });
 

@@ -107,6 +107,12 @@ export function SimpleNavbar() {
               Historia
             </a>
             <a
+              href="/validation"
+              className="px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-800/30 link-hover"
+            >
+              🔍 Validar
+            </a>
+            <a
               href="#info"
               className="ml-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 button-hover"
               onClick={handleInfoClick}
