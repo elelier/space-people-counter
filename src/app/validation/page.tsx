@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Alert } from '@/components/ui/alert';
+// import { Alert } from '@/components/ui/alert';
 import { SpaceData } from '@/services/spaceApi';
 
 interface ValidationResult {
@@ -125,9 +125,10 @@ export default function ValidationPage() {
               </div>
               
               {validation.error && (
-                <Alert className="mt-4">
-                  <strong>Error:</strong> {validation.error}
-                </Alert>
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <strong className="text-red-800">Error:</strong> 
+                  <span className="text-red-700 ml-2">{validation.error}</span>
+                </div>
               )}
             </CardContent>
           </Card>
