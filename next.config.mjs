@@ -4,6 +4,7 @@
 const nextConfig = {
   // Configuración optimizada de imágenes para Netlify
   images: {
+    unoptimized: true, // Necesario para Netlify
     remotePatterns: [
       {
         protocol: 'https',

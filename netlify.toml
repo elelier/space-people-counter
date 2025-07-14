@@ -34,11 +34,17 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Cache para imágenes
+# Cache para imágenes del public folder
 [[headers]]
   for = "/images/*"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+    
+# Cache para iconos específicamente
+[[headers]]
+  for = "/images/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
 
 # Cache para API responses (más conservador)
 [[headers]]
