@@ -2,12 +2,16 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración para Cloudflare Pages (usa export para modo estático)
-  // output: 'standalone', // Comentado - causa problemas con pre-rendering
+  // Configuración para Cloudflare Pages
+  // output: 'standalone', // Comentado - causa problemas con pre-rendering en Next.js 15
   
-  // Desactivar generación estática que está causando problemas en el build
-  // Esto es necesario para Cloudflare Pages con Next.js 15
   reactStrictMode: true,
+  
+  // Deshabilitar pre-rendering de páginas problemáticas  
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
+  },
   
   // Configuración de imágenes optimizada para Cloudflare Pages
   images: {
