@@ -1,0 +1,24 @@
+# Cloudflare Pages ignore file
+# Excluir archivos de caché que exceden el límite de 25 MiB
+
+# Next.js cache (puede ser muy grande)
+.next/cache/
+
+# Node modules (ya se instalan en el build)
+node_modules/
+
+# Archivos de desarrollo
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
