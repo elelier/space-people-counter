@@ -1,8 +1,2 @@
 # Cloudflare Pages configuration
-name = "space-people-counter"
-type = "javascript"
 pages_build_output_dir = ".next"
-
-[build]
-command = "npm run build"
-cwd = "."
