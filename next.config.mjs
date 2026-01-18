@@ -2,9 +2,15 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración optimizada de imágenes para Netlify
+  // Configuración para Cloudflare Pages (usa export para modo estático)
+  // output: 'standalone', // Comentado - causa problemas con pre-rendering
+  
+  // Desactivar generación estática que está causando problemas en el build
+  // Esto es necesario para Cloudflare Pages con Next.js 15
+  reactStrictMode: true,
+  
+  // Configuración de imágenes optimizada para Cloudflare Pages
   images: {
-    unoptimized: true, // Necesario para Netlify
     remotePatterns: [
       {
         protocol: 'https',
@@ -35,8 +41,9 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
   
-  // Configuración para Netlify
+  // Configuración de rutas
   trailingSlash: false,
+  skipTrailingSlashRedirect: true,
   
   // Headers de seguridad
   async headers() {

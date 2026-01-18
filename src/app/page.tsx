@@ -7,6 +7,9 @@ import { SimpleHistoricalData } from "@/components/SimpleHistoricalData";
 import { SpaceData } from "@/services/spaceApi";
 // Removed KofiButton import
 
+// Forzar dynamic rendering para la página principal
+export const dynamic = 'force-dynamic';
+
 // Datos iniciales para hidratar el componente
 const initialData: SpaceData = {
   message: "success",

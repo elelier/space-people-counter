@@ -1,0 +1,38 @@
+# Headers para Cloudflare Pages - Space People Counter
+
+# Headers globales de seguridad
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Cache para assets estáticos de Next.js (1 año - inmutable)
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache para imágenes del public folder (24 horas)
+/images/*
+  Cache-Control: public, max-age=86400
+
+# Cache para iconos (7 días)
+/images/icons/*
+  Cache-Control: public, max-age=604800
+
+# Cache para API responses (1 minuto público, 5 minutos en CDN)
+/api/*
+  Cache-Control: public, max-age=60, s-maxage=300
+
+# Cache para archivos estáticos comunes
+/favicon.ico
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+/manifest.json
+  Cache-Control: public, max-age=86400

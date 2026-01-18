@@ -84,8 +84,9 @@ La aplicación incluye dos temas:
 
 ### Optimización para Producción
 - Static generation cuando es posible
-- Compresión de imágenes
+- Optimización de imágenes con Next.js
 - Lazy loading de componentes
+- Despliegue en Cloudflare Pages para rendimiento global
 
 ## 📁 Estructura del Proyecto
 
@@ -100,6 +101,20 @@ src/
 ├── lib/                  # Utilidades
 └── services/             # Servicios y APIs
 ```
+
+## 🚀 Despliegue
+
+Este proyecto está optimizado para **Cloudflare Pages**:
+
+1. **Conecta tu repositorio** a Cloudflare Pages
+2. **Configuración de build**:
+   - Build command: `npm run build`
+   - Build output directory: `.next`
+   - Node version: `18` o superior
+3. **Variables de entorno** (si necesitas):
+   - Configura en el dashboard de Cloudflare Pages
+
+El proyecto utiliza Next.js 15 con App Router y API Route Handlers, totalmente compatible con Cloudflare Pages.
 
 ## 🤝 Contribuciones
 

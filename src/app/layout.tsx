@@ -15,7 +15,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Viewport configuration (separado del metadata en Next.js 15)
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://space-people.pages.dev'),
   title: "Space People Counter - ¿Cuántas personas hay en el espacio ahora?",
   description: "¿Alguna vez te has preguntado cuántas personas hay en el espacio ahora? Visita Space People! ubicación de la ISS y datos de misiones espaciales activas",
   keywords: ["espacio", "astronautas", "ISS", "estación espacial", "tiempo real", "NASA"],
@@ -39,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Space People Counter",
     description: "Contador en tiempo real de personas en el espacio exterior",
-    url: "https://space-people.netlify.app",
+    url: "https://space-people.pages.dev",
     siteName: "Space People Counter",
     images: [
       {
@@ -63,7 +70,6 @@ export const metadata: Metadata = {
   
   // Configuración adicional
   manifest: "/manifest.json",
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
 };
 
