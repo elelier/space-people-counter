@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build && next-on-pages",
-    "postbuild": "rimraf .next/cache",
+    "build": "next build",
+    "postbuild": "next-on-pages && rimraf .next/cache",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
