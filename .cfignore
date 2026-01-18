@@ -1,14 +1,15 @@
 # Cloudflare Pages ignore file
-# Excluir archivos de caché que exceden el límite de 25 MiB
+# Excluir archivos que no son necesarios para deploy
 
-# Next.js cache (puede ser muy grande)
-.next/cache/
+# Next.js cache (excede 25 MiB - CRÍTICO)
+.next/cache
+.next/cache/**
+.next/.swc
 
-# Node modules (ya se instalan en el build)
+# Node modules (instalados en build)
 node_modules/
 
-# Archivos de desarrollo
-.env.local
+# Archivos de ambiente
 .env.development.local
 .env.test.local
 .env.production.local
