@@ -104,17 +104,49 @@ src/
 
 ## 🚀 Despliegue
 
-Este proyecto está optimizado para **Cloudflare Pages**:
+Este proyecto está optimizado para **Cloudflare Workers** usando **OpenNext**:
 
-1. **Conecta tu repositorio** a Cloudflare Pages
-2. **Configuración de build**:
-   - Build command: `npm run build`
-   - Build output directory: `.next`
-   - Node version: `18` o superior
-3. **Variables de entorno** (si necesitas):
-   - Configura en el dashboard de Cloudflare Pages
+### Cloudflare Workers (Recomendado)
 
-El proyecto utiliza Next.js 15 con App Router y API Route Handlers, totalmente compatible con Cloudflare Pages.
+La aplicación se despliega como un Worker serverless en Cloudflare con Next.js 15 + App Router:
+
+```bash
+npm run build    # Build con Next.js + OpenNext
+npm run preview  # Prueba local (http://localhost:8787)
+npm run deploy   # Deploya a Cloudflare Workers
+```
+
+**Ventajas**:
+- Mayor rendimiento gracias a edge computing global
+- Deploy automático desde Git
+- Plan gratuito generoso (100k requests/día)
+- Compatibilidad total con API routes (`app/api/*`)
+
+Para más detalles, consulta [docs/DEPLOY_CLOUDFLARE.md](docs/DEPLOY_CLOUDFLARE.md).
+
+### Desarrollo Local
+
+1. **Instalar dependencias**:
+   ```bash
+   npm install --legacy-peer-deps
+   ```
+
+2. **Variables de entorno** (crear `.env.local`):
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. **Ejecutar en desarrollo**:
+   ```bash
+   npm run dev
+   ```
+   Accesible en `http://localhost:3000`
+
+4. **Probar build para Workers**:
+   ```bash
+   npm run preview
+   ```
+   Accesible en `http://localhost:8787`
 
 ## 🤝 Contribuciones
 

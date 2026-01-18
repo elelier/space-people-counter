@@ -1,0 +1,33 @@
+name = "spacepeople"
+main = ".opennext/worker.js"
+site = { bucket = ".opennext/static" }
+env = "production"
+minify = true
+compatibility_date = "2024-12-16"
+compatibility_flags = ["nodejs_compat"]
+
+# Variables de entorno
+[env.production]
+name = "spacepeople-prod"
+routes = [
+  { pattern = "*.spacepeople.workers.dev", zone_name = "spacepeople.workers.dev" }
+]
+
+# Configuración de durability para cache
+# [durable_objects]
+# bindings = [{ name = "CACHE", class_name = "CacheStore" }]
+
+# Configuración de KV para datos estáticos
+[kv_namespaces]
+# Puedes agregar KV namespaces aquí si los necesitas en el futuro
+# binding = "CACHE_KV"
+
+# Configuración de variables de entorno específicas
+[env.production.vars]
+ENVIRONMENT = "production"
+
+# Configuración de construcción
+[build]
+command = "npm install --legacy-peer-deps && npm run build"
+cwd = "."
+watch_paths = ["src/**/*.ts", "src/**/*.tsx"]
