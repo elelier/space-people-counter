@@ -3,10 +3,23 @@
   "include": ["/*"],
   "exclude": [
     "/_next/static/*",
+    "/_next/*",
     "/favicon.ico",
     "/robots.txt",
     "/sitemap.xml",
     "/manifest.json",
-    "/images/*"
+    "/images/*",
+    "/public/*"
+  ],
+  "rules": [
+    {
+      "include": "/api/*",
+      "method": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      "dynamic": true
+    },
+    {
+      "include": "/*",
+      "dynamic": true
+    }
   ]
 }

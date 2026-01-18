@@ -1,14 +1,8 @@
-# Cloudflare Pages configuration (optional)
-# This file can be used for advanced configurations
-# Most settings are auto-detected by Cloudflare Pages
-
+# Cloudflare Pages configuration
 name = "space-people-counter"
 type = "javascript"
+pages_build_output_dir = ".next"
 
-[env.production]
-name = "space-people-counter"
-
-# Build configuration
 [build]
 command = "npm run build"
 cwd = "."
