@@ -42,7 +42,7 @@ Node version: 18 o superior
 ```
 
 **Environment Variables (opcional):**
-- `NEXT_PUBLIC_APP_URL`: https://space-people.pages.dev (por defecto)
+- `NEXT_PUBLIC_APP_URL`: https://space-people-counter.pages.dev (por defecto)
 - Cualquier otra variable que necesites
 
 ### Workflow automático

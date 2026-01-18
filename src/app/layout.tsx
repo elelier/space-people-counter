@@ -22,7 +22,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://space-people.pages.dev'),
+  metadataBase: new URL('https://space-people-counter.pages.dev'),
   title: "Space People Counter - ¿Cuántas personas hay en el espacio ahora?",
   description: "¿Alguna vez te has preguntado cuántas personas hay en el espacio ahora? Visita Space People! ubicación de la ISS y datos de misiones espaciales activas",
   keywords: ["espacio", "astronautas", "ISS", "estación espacial", "tiempo real", "NASA"],
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Space People Counter",
     description: "Contador en tiempo real de personas en el espacio exterior",
-    url: "https://space-people.pages.dev",
+    url: "https://space-people-counter.pages.dev",
     siteName: "Space People Counter",
     images: [
       {
