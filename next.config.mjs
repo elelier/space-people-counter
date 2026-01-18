@@ -2,7 +2,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración para Cloudflare Pages con @cloudflare/next-on-pages
+  // Configuración para Cloudflare Pages con OpenNext
   experimental: {
     optimizePackageImports: [
       "@radix-ui/react-progress",
