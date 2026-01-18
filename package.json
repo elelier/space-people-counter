@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "build": "next build && next-on-pages",
     "postbuild": "rimraf .next/cache",
     "start": "next start",
     "lint": "next lint",
@@ -30,6 +30,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.4.5",
     "@eslint/eslintrc": "^3",
     "@types/leaflet": "^1.9.16",
     "@types/node": "^20",

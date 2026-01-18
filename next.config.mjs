@@ -2,8 +2,14 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración para Cloudflare Pages
-  // output: 'standalone', // Comentado - causa problemas con pre-rendering en Next.js 15
+  // Configuración para Cloudflare Pages con @cloudflare/next-on-pages
+  experimental: {
+    optimizePackageImports: [
+      "@radix-ui/react-progress",
+      "@radix-ui/react-tooltip",
+      "lucide-react",
+    ],
+  },
   
   reactStrictMode: true,
   
