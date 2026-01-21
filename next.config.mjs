@@ -2,16 +2,17 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configuración para Cloudflare Pages con OpenNext
+  reactStrictMode: true,
+  
+  // Configuración experimental
   experimental: {
     optimizePackageImports: [
       "@radix-ui/react-progress",
       "@radix-ui/react-tooltip",
       "lucide-react",
+      "framer-motion"
     ],
   },
-  
-  reactStrictMode: true,
   
   // Deshabilitar pre-rendering de páginas problemáticas  
   onDemandEntries: {
@@ -46,11 +47,6 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   
-  // Configuración para mejor rendimiento
-  experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
-  },
-  
   // Configuración de rutas
   trailingSlash: false,
   skipTrailingSlashRedirect: true,
@@ -76,12 +72,6 @@ const nextConfig = {
         ],
       },
     ];
-  },
-  
-  // Variables de entorno públicas
-  env: {
-    NEXT_PUBLIC_APP_NAME: 'Space People Counter',
-    NEXT_PUBLIC_APP_DESCRIPTION: 'Real-time space people counter with ISS tracking',
   },
   
   // Configuración de webpack para optimización
