@@ -1,6 +1,6 @@
 name = "spacepeople"
 compatibility_date = "2024-12-16"
-pages_build_output_dir = ".open-next/server"
+pages_build_output_dir = ".vercel/output/static"
 
 [env.production]
 vars = { ENVIRONMENT = "production" }
