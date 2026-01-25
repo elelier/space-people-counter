@@ -58,11 +58,12 @@ Una aplicación web moderna que muestra en tiempo real cuántas personas están 
 - `npm run start` - Ejecutar build de producción
 - `npm run lint` - Linter ESLint
 
-## 🔧 Integración de Datos (sin backend)
+## 🔧 Integración de Datos (Cloudflare Pages Functions)
 
-Los datos se consumen directamente desde APIs públicas en el cliente:
-- Open Notify API - Astronautas en el espacio
-- Where the ISS at? - Ubicación de la ISS en tiempo real
+Los datos se consumen desde `/api/*` (Pages Functions) y estas funciones consultan APIs públicas:
+- `/api/space-people` -> Open Notify (astronautas en el espacio)
+- `/api/iss-location` -> Where the ISS at? (ubicación de la ISS)
+- `/api/health` -> health checks de APIs externas
 
 ## 🎨 Temas
 
@@ -86,7 +87,7 @@ La aplicación incluye dos temas:
 - Static generation cuando es posible
 - Optimización de imágenes con Next.js
 - Lazy loading de componentes
-- Despliegue en GitHub Pages + Cloudflare para rendimiento global
+- Despliegue en Cloudflare Pages (static + functions)
 
 ## 📁 Estructura del Proyecto
 
@@ -103,21 +104,24 @@ src/
 
 ## 🚀 Despliegue
 
-Este proyecto está preparado para exportación estática con **GitHub Pages + Cloudflare**.
+Este proyecto se publica como sitio estático en **Cloudflare Pages** con **Pages Functions** para `/api/*`.
 
-### GitHub Pages (recomendado)
+### Cloudflare Pages
+
+1. Crea un proyecto en Cloudflare Pages y conecta el repo.
+2. Build command: `npm run build`
+3. Output directory: `out`
+4. Functions directory: `functions` (auto-detectado)
+5. (Opcional) Variables de entorno en Pages:
+   - `SPACE_PEOPLE_API`
+   - `ISS_API`
+
+### Desarrollo local con funciones
 
 ```bash
-npm run build    # Genera la carpeta out/
+npm run build
+npx wrangler pages dev out --compatibility-date=2025-01-01
 ```
-
-El workflow `.github/workflows/pages.yml` publica automáticamente `out/` en GitHub Pages cuando haces push a `main`.
-
-### Cloudflare (CDN + dominio)
-
-1. Crea un CNAME `spacepeople` → `<tu-usuario>.github.io`.
-2. Activa el proxy (nube naranja) y usa SSL en modo **Full**.
-3. El archivo `public/CNAME` ya define el dominio `spacepeople.elelier.com`.
 
 ### Desarrollo Local
 

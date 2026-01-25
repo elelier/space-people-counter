@@ -14,8 +14,7 @@ export interface ISSLocationData {
   units?: string;
 }
 
-const DEFAULT_ISS_API_URL = "https://api.wheretheiss.at/v1/satellites/25544";
-const ISS_API_URL = process.env.NEXT_PUBLIC_ISS_API || DEFAULT_ISS_API_URL;
+const ISS_API_URL = "/api/iss-location";
 
 // Cache for ISS location data to reduce API calls
 let issLocationCache: ISSLocationData | null = null;

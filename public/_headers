@@ -20,10 +20,6 @@
 /images/icons/*
   Cache-Control: public, max-age=604800
 
-# Cache para API responses (1 minuto público, 5 minutos en CDN)
-/api/*
-  Cache-Control: public, max-age=60, s-maxage=300
-
 # Cache para archivos estáticos comunes
 /favicon.ico
   Cache-Control: public, max-age=86400
