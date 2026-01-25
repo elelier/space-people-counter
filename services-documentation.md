@@ -20,20 +20,19 @@ interface AstronautData {
 - `getPeopleInSpace()`: Obtiene datos sobre personas en el espacio
   - **Retorno**: Promise<SpaceData>
   - **Comportamiento**:
-    - Intenta obtener datos de la API externa (Open Notify)
-    - Utiliza datos de respaldo si la API falla
-    - Control de errores con fallback a datos predeterminados
+    - Consume `/api/space-people` (Pages Functions)
+    - Utiliza datos de respaldo si `/api` falla
+    - Cache en cliente para reducir llamadas
   - **Implementación**:
     ```typescript
     export async function getPeopleInSpace(): Promise<SpaceData> {
-      try {
-        // Actualmente usa datos estáticos ya que la API está desactualizada
-        // Implementación real comentada que usaría fetch a Open Notify
-        return fallbackData;
-      } catch (error) {
-        console.error('Failed to fetch people in space:', error);
-        return fallbackData;
+      const response = await fetch('/api/space-people', { cache: 'no-store' });
+
+      if (response.ok) {
+        return await response.json();
       }
+
+      return fallbackData;
     }
     ```
 
@@ -55,63 +54,25 @@ export interface ISSLocationData {
 - `getISSLocation()`: Obtiene la ubicación actual de la ISS
   - **Retorno**: Promise<ISSLocationData>
   - **Comportamiento**:
-    - Sistema de múltiples intentos con diferentes APIs
-    - Primera opción: API de wheretheiss.at
-    - Segunda opción: API de Open Notify
-    - Fallback a ubicaciones calculadas si ambas APIs fallan
+    - Consume `/api/iss-location` (Pages Functions)
+    - Usa fallback simulado si `/api` falla
   - **Implementación**:
     ```typescript
     export async function getISSLocation(): Promise<ISSLocationData> {
-      try {
-        // 1. Intento con wheretheiss.at
-        try {
-          const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-          if (response.ok) {
-            const data = await response.json();
-            return {
-              message: "success",
-              timestamp: Date.now(),
-              iss_position: {
-                latitude: data.latitude.toString(),
-                longitude: data.longitude.toString()
-              }
-            };
-          }
-        } catch (error) {
-          console.error('First API attempt failed:', error);
-        }
+      const response = await fetch('/api/iss-location', { cache: 'no-store' });
 
-        // 2. Intento con Open Notify
-        try {
-          const response = await fetch('https://api.open-notify.org/iss-now.json');
-          if (response.ok) {
-            const data = await response.json();
-            if (data.message === "success") {
-              return data;
-            }
-          }
-        } catch (error) {
-          console.error('Second API attempt failed:', error);
-        }
-
-        // 3. Usar ubicación calculada si ambas fallan
-        const fallbackPosition = getFallbackLocation();
-        return {
-          message: "success (fallback)",
-          timestamp: Date.now(),
-          iss_position: fallbackPosition
-        };
-      } catch (error) {
-        console.error('Failed to fetch ISS location:', error);
-        return {
-          message: "error",
-          timestamp: Date.now(),
-          iss_position: {
-            latitude: "0",
-            longitude: "0"
-          }
-        };
+      if (response.ok) {
+        return await response.json();
       }
+
+      return {
+        message: "success (simulated)",
+        timestamp: Date.now(),
+        iss_position: {
+          latitude: "0",
+          longitude: "0"
+        }
+      };
     }
     ```
 

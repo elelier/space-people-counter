@@ -2,21 +2,20 @@
 
 ## Fuentes de datos
 
-Este proyecto es 100% estático. Los datos se consumen directamente desde APIs públicas en el cliente:
+Este proyecto es estático y usa **Cloudflare Pages Functions** para `/api/*`.
 
-- **Open Notify**: `https://api.open-notify.org/astros.json` (personas en el espacio)
-- **Where the ISS at?**: `https://api.wheretheiss.at/v1/satellites/25544` (ubicación ISS)
+- **/api/space-people** → Open Notify (`https://api.open-notify.org/astros.json`)
+- **/api/iss-location** → Where the ISS at? (`https://api.wheretheiss.at/v1/satellites/25544`)
+- **/api/health** → checks de salud de APIs externas
 
 ## Configuración (opcional)
 
-Puedes sobreescribir los endpoints con variables de entorno:
+Puedes sobreescribir los endpoints de las functions con variables de entorno en Cloudflare:
 
-- `NEXT_PUBLIC_SPACE_PEOPLE_API`
-- `NEXT_PUBLIC_ISS_API`
-
-Estas variables se resuelven en build time (export estático).
+- `SPACE_PEOPLE_API`
+- `ISS_API`
 
 ## Notas
 
-- Si alguna API no permite CORS, necesitarás un proxy (por ejemplo, Cloudflare Worker).
-- El sistema incluye fallback y caché en cliente para evitar bloqueos y reducir llamadas.
+- Al usar `/api/*`, el cliente evita problemas de CORS.
+- El sistema incluye fallback y caché para evitar bloqueos y reducir llamadas.

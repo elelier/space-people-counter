@@ -10,7 +10,7 @@ El servidor estará disponible en `http://localhost:3000`
 
 ### Cómo probar
 - **Página principal**: http://localhost:3000
-- **Datos en vivo**: se consumen directamente desde APIs públicas en el cliente
+- **Datos en vivo**: se consumen desde `/api/*` (Pages Functions)
 
 ### Linter
 ```bash
@@ -24,32 +24,34 @@ npm run type-check
 
 ---
 
-## 🌐 Deployment en GitHub Pages + Cloudflare
+## 🌐 Deployment en Cloudflare Pages (static + functions)
 
 ### Requisitos previos
-1. Repositorio en GitHub
-2. Dominio en Cloudflare (opcional, recomendado)
+1. Repositorio en GitHub/GitLab
+2. Cuenta en Cloudflare
 
-### GitHub Pages (build automático)
+### Cloudflare Pages
+1. Crea un proyecto en Pages y conecta el repo.
+2. Build command: `npm run build`
+3. Output directory: `out`
+4. Functions directory: `functions` (auto-detectado)
+5. (Opcional) Variables de entorno:
+   - `SPACE_PEOPLE_API`
+   - `ISS_API`
 
-El workflow `.github/workflows/pages.yml`:
-1. Ejecuta `npm ci`
-2. Ejecuta `npm run build` (genera `out/`)
-3. Publica `out/` en GitHub Pages
-
-### Dominio personalizado con Cloudflare
-1. En Cloudflare DNS, crea un CNAME `spacepeople` → `<tu-usuario>.github.io`
-2. Activa el proxy (nube naranja)
-3. SSL: **Full**
-4. El archivo `public/CNAME` ya incluye `spacepeople.elelier.com`
+### Dominio personalizado
+1. En Pages, agrega el dominio en Custom Domains.
+2. Configura el DNS (CNAME/ALIAS) según indique Cloudflare.
+3. SSL: **Full** (o el recomendado por Cloudflare)
 
 ---
 
 ## 📝 Notas Importantes
 
 - La exportación estática genera la carpeta `out/`.
+- Las Pages Functions viven en `functions/api/*` y responden a `/api/*`.
 - Para builds locales, usa `NODE_ENV=production npm run build` si tienes un `NODE_ENV` no estándar.
-- El archivo `public/.nojekyll` evita que GitHub Pages ignore `_next/`.
+- Para probar UI + funciones: `npx wrangler pages dev out --compatibility-date=2025-01-01`.
 
 ---
 
@@ -57,10 +59,10 @@ El workflow `.github/workflows/pages.yml`:
 
 | Archivo | Propósito |
 |---------|-----------|
-| `.github/workflows/pages.yml` | Deploy automático a GitHub Pages |
+| `wrangler.toml` | Config de Pages dev y output |
+| `functions/api/*.ts` | Pages Functions para `/api/*` |
 | `next.config.mjs` | Configuración de export estático |
-| `public/CNAME` | Dominio personalizado |
-| `public/.nojekyll` | Compatibilidad con `_next/` |
+| `public/_headers` | Headers de Cloudflare Pages |
 | `.env.example` | Variables de entorno de ejemplo |
 
 ---
@@ -80,20 +82,19 @@ npm run build:analyze # Analizar tamaño del build
 
 ## 🧰 Solución de problemas
 
-### "404 - Página no encontrada" en GitHub Pages
-1. Verifica que el workflow publique `out/`
-2. Asegúrate de que `public/.nojekyll` exista
-3. Revisa el entorno de GitHub Pages (Settings → Pages)
+### "404 /api/*" en local
+1. Ejecuta `npm run build` y luego `npx wrangler pages dev out --compatibility-date=2025-01-01`
+2. Verifica que exista `functions/api/*`
 
 ### Problemas de CORS con APIs públicas
-- Si una API no permite CORS, necesitarás un proxy (por ejemplo, Cloudflare Worker).
+- Usa `/api/*` (Pages Functions) para evitar CORS en el cliente.
 
 ---
 
 ## 📚 Recursos
 
-- Documentación de GitHub Pages
-- Documentación de Cloudflare DNS
+- Documentación de Cloudflare Pages
+- Documentación de Cloudflare Pages Functions
 - Documentación de Next.js (Static Export)
 
 ---

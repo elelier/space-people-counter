@@ -1,27 +1,23 @@
-# Configuración rápida: Cloudflare (DNS + CDN)
+# Configuración rápida: Cloudflare Pages
 
-## 1) Añadir el dominio
-1. En Cloudflare, agrega `elelier.com` si no está añadido
-2. Confirma que los nameservers estén apuntando a Cloudflare
+## 1) Crear proyecto en Pages
+1. En Cloudflare, ve a Pages y crea un proyecto
+2. Conecta el repositorio
 
-## 2) Crear el DNS para GitHub Pages
-1. En **DNS**, crea un registro:
-   - **Type**: CNAME
-   - **Name**: `spacepeople`
-   - **Target**: `<tu-usuario>.github.io`
-   - **Proxy**: ON (nube naranja)
+## 2) Configurar build
+- Build command: `npm run build`
+- Output directory: `out`
+- Functions directory: `functions` (auto-detectado)
 
-## 3) SSL/TLS
-1. Ve a **SSL/TLS**
-2. Selecciona **Full**
+## 3) Variables de entorno (opcional)
+- `SPACE_PEOPLE_API`
+- `ISS_API`
 
-## 4) Revisar el dominio personalizado
-1. En GitHub Pages, verifica que el dominio esté configurado
-2. Deja `public/CNAME` con `spacepeople.elelier.com`
+## 4) Dominio personalizado
+1. En Pages -> Custom Domains, agrega `spacepeople.elelier.com`
+2. Configura los DNS según indique Cloudflare
+3. SSL/TLS: **Full** (o recomendado por Cloudflare)
 
-## 5) (Opcional) Cache recomendado
-- Cachear `_next/static/*` por largo tiempo
-- Evitar cache agresivo para HTML
-
-## 6) Verificación rápida
+## 5) Verificación rápida
 - `https://spacepeople.elelier.com` carga correctamente
+- `/api/health` responde JSON
