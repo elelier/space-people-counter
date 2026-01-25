@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SpaceData } from "@/services/spaceApi";
+import { getPeopleInSpace, SpaceData } from "@/services/spaceApi";
 import { RefreshCcw, Users, TrendingUp, TrendingDown, Info } from "lucide-react";
 import { UpdateCountdown } from "./UpdateCountdown";
 import { Alert, AlertType } from "@/components/ui/alert";
@@ -62,18 +62,9 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
     setLoading(true);
 
     try {
-      // Replace getSpacePeople with direct fetch call
-      const response = await fetch('/api/space-people');
-
-      if (!response.ok) {
-        throw new Error('Error en la respuesta del API');
-      }
-
-      const newData: SpaceData = await response.json();
-
-      if (newData.message === 'error') {
-        throw new Error('Error en los datos recibidos');
-      }
+      const newData: SpaceData = await getPeopleInSpace();
+      const usingFallback = newData.message.toLowerCase().includes('fallback');
+      setError(usingFallback);
 
       // Sin cambios en los datos, salir temprano
       if (JSON.stringify(newData.people) === JSON.stringify(data.people)) {
@@ -263,7 +254,7 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
 
             {error && (
               <div className="mt-4 p-3 bg-red-900/50 border border-red-500/50 rounded-md text-white">
-                <p>Hubo un error al actualizar los datos. Intenta de nuevo más tarde.</p>
+                <p>No se pudo actualizar en vivo; mostrando datos de respaldo.</p>
               </div>
             )}
           </div>

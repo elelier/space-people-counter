@@ -14,6 +14,9 @@ export interface ISSLocationData {
   units?: string;
 }
 
+const DEFAULT_ISS_API_URL = "https://api.wheretheiss.at/v1/satellites/25544";
+const ISS_API_URL = process.env.NEXT_PUBLIC_ISS_API || DEFAULT_ISS_API_URL;
+
 // Cache for ISS location data to reduce API calls
 let issLocationCache: ISSLocationData | null = null;
 let lastCacheTime = 0;
@@ -62,10 +65,9 @@ export async function getISSLocation(): Promise<ISSLocationData> {
 
   try {
     // Primary API: wheretheiss.at - More reliable and provides additional data
-    console.log('Fetching from wheretheiss.at API...');
-    const response = await fetch('https://api.wheretheiss.at/v1/satellites/25544', {
+    console.log('Fetching from ISS API...');
+    const response = await fetch(ISS_API_URL, {
       cache: 'no-store', // Always get fresh data
-      next: { revalidate: 0 }, // No revalidation in Next.js cache
     });
 
     if (response.ok) {

@@ -4,11 +4,11 @@ import { ISSMap } from "@/components/ISSMap";
 import { SpaceStationsInfo } from "@/components/SpaceStationsInfo";
 import { SimpleNavbar } from "@/components/SimpleNavbar";
 import { SimpleHistoricalData } from "@/components/SimpleHistoricalData";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { StructuredData } from "@/components/StructuredData";
 import { SpaceData } from "@/services/spaceApi";
 // Removed KofiButton import
 
-// Forzar dynamic rendering para la página principal
-export const dynamic = 'force-dynamic';
 
 // Datos iniciales para hidratar el componente
 const initialData: SpaceData = {
@@ -33,6 +33,8 @@ const initialData: SpaceData = {
 export default function Home() {
   return (
     <main>
+      <GoogleAnalytics />
+      <StructuredData />
       <SimpleNavbar />
       <div className="pt-24 pb-20 container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-8 sm:gap-12">
         {/* Elemento invisible para el enlace "Inicio" con el id "top" */}

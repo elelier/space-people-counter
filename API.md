@@ -1,18 +1,22 @@
-# Documentación de la API - Space People Counter
+# Documentación de Integración de Datos - Space People Counter
 
-## 🔍 Validación de Datos
+## Fuentes de datos
 
-**IMPORTANTE**: Todos los datos mostrados son reales y actualizados. Consulta `/validation` para verificación en tiempo real.
+Este proyecto es 100% estático. Los datos se consumen directamente desde APIs públicas en el cliente:
 
-### Fuentes de Datos Verificadas:
-- **API Principal**: Open Notify (https://api.open-notify.org/astros.json)
-- **Mantenimiento**: Manual por expertos cuando ocurren lanzamientos/aterrizajes
-- **Precisión**: Alta - datos coinciden con fuentes oficiales de NASA, Roscosmos, CNSA
+- **Open Notify**: `https://api.open-notify.org/astros.json` (personas en el espacio)
+- **Where the ISS at?**: `https://api.wheretheiss.at/v1/satellites/25544` (ubicación ISS)
 
-## API Endpoints
+## Configuración (opcional)
 
-### 1. `/api/space-people`
-Proporciona información sobre las personas actualmente en el espacio.
+Puedes sobreescribir los endpoints con variables de entorno:
 
-**Método**: GET
-**Respuesta**:
+- `NEXT_PUBLIC_SPACE_PEOPLE_API`
+- `NEXT_PUBLIC_ISS_API`
+
+Estas variables se resuelven en build time (export estático).
+
+## Notas
+
+- Si alguna API no permite CORS, necesitarás un proxy (por ejemplo, Cloudflare Worker).
+- El sistema incluye fallback y caché en cliente para evitar bloqueos y reducir llamadas.

@@ -58,11 +58,11 @@ Una aplicación web moderna que muestra en tiempo real cuántas personas están 
 - `npm run start` - Ejecutar build de producción
 - `npm run lint` - Linter ESLint
 
-## 🔧 API Endpoints
+## 🔧 Integración de Datos (sin backend)
 
-- `/api/space-people` - Datos de astronautas en el espacio
-- `/api/iss-location` - Ubicación actual de la ISS
-- `/api/health` - Estado de salud de las APIs externas
+Los datos se consumen directamente desde APIs públicas en el cliente:
+- Open Notify API - Astronautas en el espacio
+- Where the ISS at? - Ubicación de la ISS en tiempo real
 
 ## 🎨 Temas
 
@@ -86,14 +86,13 @@ La aplicación incluye dos temas:
 - Static generation cuando es posible
 - Optimización de imágenes con Next.js
 - Lazy loading de componentes
-- Despliegue en Cloudflare Pages para rendimiento global
+- Despliegue en GitHub Pages + Cloudflare para rendimiento global
 
 ## 📁 Estructura del Proyecto
 
 ```
 src/
 ├── app/                    # App Router de Next.js
-│   ├── api/               # API routes
 │   └── globals.css        # Estilos globales
 ├── components/            # Componentes React
 │   ├── ui/               # Componentes de UI base
@@ -104,25 +103,21 @@ src/
 
 ## 🚀 Despliegue
 
-Este proyecto está optimizado para **Cloudflare Workers** usando **OpenNext**:
+Este proyecto está preparado para exportación estática con **GitHub Pages + Cloudflare**.
 
-### Cloudflare Workers (Recomendado)
-
-La aplicación se despliega como un Worker serverless en Cloudflare con Next.js 15 + App Router:
+### GitHub Pages (recomendado)
 
 ```bash
-npm run build    # Build con Next.js + OpenNext
-npm run preview  # Prueba local (http://localhost:8787)
-npm run deploy   # Deploya a Cloudflare Workers
+npm run build    # Genera la carpeta out/
 ```
 
-**Ventajas**:
-- Mayor rendimiento gracias a edge computing global
-- Deploy automático desde Git
-- Plan gratuito generoso (100k requests/día)
-- Compatibilidad total con API routes (`app/api/*`)
+El workflow `.github/workflows/pages.yml` publica automáticamente `out/` en GitHub Pages cuando haces push a `main`.
 
-Para más detalles, consulta [docs/DEPLOY_CLOUDFLARE.md](docs/DEPLOY_CLOUDFLARE.md).
+### Cloudflare (CDN + dominio)
+
+1. Crea un CNAME `spacepeople` → `<tu-usuario>.github.io`.
+2. Activa el proxy (nube naranja) y usa SSL en modo **Full**.
+3. El archivo `public/CNAME` ya define el dominio `spacepeople.elelier.com`.
 
 ### Desarrollo Local
 
@@ -142,11 +137,11 @@ Para más detalles, consulta [docs/DEPLOY_CLOUDFLARE.md](docs/DEPLOY_CLOUDFLARE.
    ```
    Accesible en `http://localhost:3000`
 
-4. **Probar build para Workers**:
+4. **Probar export estático**:
    ```bash
-   npm run preview
+   npm run build
+   npx serve out
    ```
-   Accesible en `http://localhost:8787`
 
 ## 🤝 Contribuciones
 

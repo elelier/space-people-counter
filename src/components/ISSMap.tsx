@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
-import { ISSLocationData } from "@/services/issLocationApi";
+import { getISSLocation, ISSLocationData } from "@/services/issLocationApi";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw, MapPin, AlertCircle, Satellite, Globe, ChevronDown, ChevronUp, Info, Clock, FlaskConical, Users, PlusCircle } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -89,13 +89,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   const fetchISSLocation = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/iss-location');
-
-      if (!response.ok) {
-        throw new Error('Error en la respuesta de la API');
-      }
-
-      const data = await response.json();
+      const data = await getISSLocation();
       setIssLocation(data);
       setLastUpdateTime(Date.now());
 

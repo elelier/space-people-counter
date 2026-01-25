@@ -107,12 +107,6 @@ export function SimpleNavbar() {
               Historia
             </a>
             <a
-              href="/validation"
-              className="px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-blue-800/30 link-hover"
-            >
-              🔍 Validar
-            </a>
-            <a
               href="#info"
               className="ml-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 button-hover"
               onClick={handleInfoClick}
@@ -168,17 +162,6 @@ export function SimpleNavbar() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </a>
-            <a
-              href="/validation"
-              className="p-2 rounded-md text-white hover:bg-blue-800/30 icon-hover"
-              title="Validar Datos"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m9 12 2 2 4-4"></path>
-                <path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"></path>
-                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
               </svg>
             </a>
             <a

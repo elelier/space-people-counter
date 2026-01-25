@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/test/', '/kofi-test/'],
+      disallow: ['/api/'],
     },
-    sitemap: 'https://space-people.netlify.app/sitemap.xml',
+    sitemap: 'https://spacepeople.elelier.com/sitemap.xml',
   }
 }

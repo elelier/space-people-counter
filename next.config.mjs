@@ -3,6 +3,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'export',
+  
+  // Deshabilitar prerendering de páginas de error
+  staticPageGenerationTimeout: 120,
   
   // Configuración experimental
   experimental: {
@@ -22,6 +26,7 @@ const nextConfig = {
   
   // Configuración de imágenes optimizada para Cloudflare Pages
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -48,31 +53,7 @@ const nextConfig = {
   },
   
   // Configuración de rutas
-  trailingSlash: false,
-  skipTrailingSlashRedirect: true,
-  
-  // Headers de seguridad
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-        ],
-      },
-    ];
-  },
+  trailingSlash: true,
   
   // Configuración de webpack para optimización
   webpack: (config, { dev, isServer }) => {

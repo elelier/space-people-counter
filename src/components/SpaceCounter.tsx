@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { SpaceData } from "@/services/spaceApi";
+import { getPeopleInSpace, SpaceData } from "@/services/spaceApi";
 import { RefreshCcw, Users, Rocket, Info, Calendar, Flag } from "lucide-react";
 import { UpdateCountdown } from "./UpdateCountdown";
 import { MissionDetailsModal } from "./MissionDetailsModal";
@@ -33,17 +33,9 @@ export function SpaceCounter({
       setLoading(true);
       setError(false);
 
-      const response = await fetch('/api/space-people');
-
-      if (!response.ok) {
-        throw new Error('Error en la respuesta del API');
-      }
-
-      const newData = await response.json();
-
-      if (newData.message === 'error') {
-        throw new Error('Error en los datos recibidos');
-      }
+      const newData = await getPeopleInSpace();
+      const usingFallback = newData.message.toLowerCase().includes('fallback');
+      setError(usingFallback);
 
       setData(newData);
       setAnimateNumber(true);
@@ -205,7 +197,7 @@ export function SpaceCounter({
 
           {error && (
             <div className="mt-4 p-3 bg-red-900/50 border border-red-500/50 rounded-md text-white">
-              <p>Hubo un error al actualizar los datos. Intenta de nuevo más tarde.</p>
+              <p>No se pudo actualizar en vivo; mostrando datos de respaldo.</p>
             </div>
           )}
         </div>
