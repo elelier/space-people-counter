@@ -6,7 +6,7 @@ export function StructuredData() {
     "@type": "WebApplication",
     "name": "Space People Counter",
     "description": "Contador en tiempo real de personas en el espacio exterior, ubicación de la ISS y datos de misiones espaciales activas",
-    "url": "https://space-people.netlify.app",
+    "url": "https://spacepeople.elelier.com",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Web Browser",
     "offers": {

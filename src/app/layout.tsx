@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-import ClientBody from "./ClientBody";
-import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { StructuredData } from "@/components/StructuredData";
+import { ThemeWrapper } from "@/components/ThemeWrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mono = Roboto_Mono({
+  variable: "--font-roboto-mono",
   subsets: ["latin"],
 });
 
@@ -22,7 +20,7 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://space-people-counter.pages.dev'),
+  metadataBase: new URL('https://spacepeople.elelier.com'),
   title: "Space People Counter - ¿Cuántas personas hay en el espacio ahora?",
   description: "¿Alguna vez te has preguntado cuántas personas hay en el espacio ahora? Visita Space People! ubicación de la ISS y datos de misiones espaciales activas",
   keywords: ["espacio", "astronautas", "ISS", "estación espacial", "tiempo real", "NASA"],
@@ -46,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Space People Counter",
     description: "Contador en tiempo real de personas en el espacio exterior",
-    url: "https://space-people-counter.pages.dev",
+    url: "https://spacepeople.elelier.com",
     siteName: "Space People Counter",
     images: [
       {
@@ -79,12 +77,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <GoogleAnalytics />
-      <StructuredData />
-      <ClientBody>
-        {children}
-      </ClientBody>
+    <html lang="es" className={`${inter.variable} ${mono.variable}`}>
+      <body className="antialiased" suppressHydrationWarning>
+        <ThemeWrapper>
+          {children}
+        </ThemeWrapper>
+      </body>
     </html>
   );
 }

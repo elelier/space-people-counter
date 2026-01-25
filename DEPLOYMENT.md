@@ -10,9 +10,7 @@ El servidor estará disponible en `http://localhost:3000`
 
 ### Cómo probar
 - **Página principal**: http://localhost:3000
-- **API de astronautas**: http://localhost:3000/api/space-people
-- **API de ubicación ISS**: http://localhost:3000/api/iss-location
-- **API de salud**: http://localhost:3000/api/health
+- **Datos en vivo**: se consumen directamente desde APIs públicas en el cliente
 
 ### Linter
 ```bash
@@ -26,51 +24,32 @@ npm run type-check
 
 ---
 
-## 🌐 Deployment en Cloudflare Pages
+## 🌐 Deployment en GitHub Pages + Cloudflare
 
 ### Requisitos previos
-1. Cuenta de Cloudflare
-2. Repositorio en GitHub conectado
+1. Repositorio en GitHub
+2. Dominio en Cloudflare (opcional, recomendado)
 
-### Configuración en Cloudflare Pages
+### GitHub Pages (build automático)
 
-**Build Settings:**
-```
-Build command: npm run build
-Build output directory: .next
-Node version: 18 o superior
-```
+El workflow `.github/workflows/pages.yml`:
+1. Ejecuta `npm ci`
+2. Ejecuta `npm run build` (genera `out/`)
+3. Publica `out/` en GitHub Pages
 
-**Environment Variables (opcional):**
-- `NEXT_PUBLIC_APP_URL`: https://space-people-counter.pages.dev (por defecto)
-- Cualquier otra variable que necesites
-
-### Workflow automático
-1. Push a `main` branch
-2. Cloudflare detecta cambios
-3. Ejecuta `npm run build` automáticamente
-4. Script `postbuild` elimina `.next/cache`
-5. Archivos se despliegan en Cloudflare
+### Dominio personalizado con Cloudflare
+1. En Cloudflare DNS, crea un CNAME `spacepeople` → `<tu-usuario>.github.io`
+2. Activa el proxy (nube naranja)
+3. SSL: **Full**
+4. El archivo `public/CNAME` ya incluye `spacepeople.elelier.com`
 
 ---
 
 ## 📝 Notas Importantes
 
-### Build Local
-El `npm run build` local puede fallar debido a un bug conocido de Next.js 15.2.3 con el pre-rendering. **Esto no afecta el deployment en Cloudflare**, ya que Cloudflare usa su propio sistema de build optimizado.
-
-**Solución para desarrollo local**: Usa `npm run dev` que funciona perfectamente.
-
-### Cloudflare Pages
-- ✅ Soporta Next.js 15 App Router
-- ✅ Compatible con API Route Handlers
-- ✅ Headers de seguridad configurados en `public/_headers`
-- ✅ Optimización automática de caché
-
-### Compatibilidad
-- Next.js 15.2.0+
-- React 18.3.1+
-- Node.js 18+
+- La exportación estática genera la carpeta `out/`.
+- Para builds locales, usa `NODE_ENV=production npm run build` si tienes un `NODE_ENV` no estándar.
+- El archivo `public/.nojekyll` evita que GitHub Pages ignore `_next/`.
 
 ---
 
@@ -78,35 +57,20 @@ El `npm run build` local puede fallar debido a un bug conocido de Next.js 15.2.3
 
 | Archivo | Propósito |
 |---------|-----------|
-| `.npmrc` | Habilita `legacy-peer-deps` para npm install |
-| `.cfignore` | Excluye archivos del deploy (node_modules, .env, logs) |
-| `public/_headers` | Headers HTTP de seguridad y caché para Cloudflare |
-| `next.config.mjs` | Configuración de Next.js optimizada |
+| `.github/workflows/pages.yml` | Deploy automático a GitHub Pages |
+| `next.config.mjs` | Configuración de export estático |
+| `public/CNAME` | Dominio personalizado |
+| `public/.nojekyll` | Compatibilidad con `_next/` |
 | `.env.example` | Variables de entorno de ejemplo |
 
 ---
 
-## 🚨 Solución de problemas
-
-### "404 - Página no encontrada" en Cloudflare Pages
-1. Verifica que el build completó exitosamente
-2. Asegúrate de que `npm run build` genera el directorio `.next`
-3. Revisa los logs de build en Cloudflare Dashboard
-
-### Dependencias con conflictos
-El archivo `.npmrc` resuelve automáticamente los conflictos de peer dependencies con `react-leaflet` y `react@18`.
-
-### Build lento
-Cloudflare cachea los builds. Los siguientes deploys serán más rápidos.
-
----
-
-## 📊 Scripts disponibles
+## 🧪 Scripts disponibles
 
 ```bash
-npm run dev          # Servidor de desarrollo (recomendado para pruebas)
-npm run build        # Build para producción (puede fallar localmente)
-npm run start        # Ejecutar build de producción
+npm run dev          # Servidor de desarrollo
+npm run build        # Build para export estático
+npm run start        # Ejecutar build de producción (no recomendado en export)
 npm run lint         # Linter ESLint
 npm run type-check   # Verificar tipos TypeScript
 npm run build:analyze # Analizar tamaño del build
@@ -114,21 +78,24 @@ npm run build:analyze # Analizar tamaño del build
 
 ---
 
-## 💡 Tips
+## 🧰 Solución de problemas
 
-- Para cambios rápidos durante desarrollo, usa `npm run dev`
-- Antes de hacer push, ejecuta `npm run lint` y `npm run type-check`
-- Los cambios en Git se despliegan automáticamente en Cloudflare Pages
-- Las URLs de APIs son relativas: `/api/space-people`, `/api/iss-location`, etc.
+### "404 - Página no encontrada" en GitHub Pages
+1. Verifica que el workflow publique `out/`
+2. Asegúrate de que `public/.nojekyll` exista
+3. Revisa el entorno de GitHub Pages (Settings → Pages)
+
+### Problemas de CORS con APIs públicas
+- Si una API no permite CORS, necesitarás un proxy (por ejemplo, Cloudflare Worker).
 
 ---
 
 ## 📚 Recursos
 
-- [Documentación de Cloudflare Pages](https://developers.cloudflare.com/pages/)
-- [Documentación de Next.js 15](https://nextjs.org/docs)
-- [Referencia de Tailwind CSS](https://tailwindcss.com/docs)
+- Documentación de GitHub Pages
+- Documentación de Cloudflare DNS
+- Documentación de Next.js (Static Export)
 
 ---
 
-**Última actualización**: 2026-01-18
+**Última actualización**: 2026-01-25
