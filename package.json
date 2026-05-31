@@ -6,7 +6,7 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
     "build:analyze": "ANALYZE=true npm run build"
   },
