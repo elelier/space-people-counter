@@ -46,7 +46,7 @@ const requiredAuditTokens = [
   "Tiangong",
   "WhereTheISS",
   "Static fallback",
-  "Runtime architecture rule"
+  "should stay organized"
 ];
 
 for (const token of requiredAuditTokens) {
