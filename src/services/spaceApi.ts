@@ -22,10 +22,11 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 let cachedData: SpaceData | null = null;
 let cacheTimestamp = 0;
 
-// Datos de respaldo en caso de que la API falle
+// Client-only fallback if /api/space-people cannot be reached at all.
+// Snapshot from the 2026-06-06 source audit; always marked as stale fallback.
 const fallbackData: SpaceData = {
-  number: 12,
-  message: "success (fallback)",
+  number: 10,
+  message: "success (fallback; client stale snapshot)",
   status: "fallback",
   source: "client-static-fallback",
   isFallback: true,
@@ -34,18 +35,16 @@ const fallbackData: SpaceData = {
   responseTime: 0,
   error: "Client could not reach /api/space-people",
   people: [
-    { name: "Oleg Kononenko", craft: "ISS" },
-    { name: "Nikolai Chub", craft: "ISS" },
-    { name: "Tracy Caldwell Dyson", craft: "ISS" },
-    { name: "Matthew Dominick", craft: "ISS" },
-    { name: "Michael Barratt", craft: "ISS" },
-    { name: "Jeanette Epps", craft: "ISS" },
-    { name: "Alexander Grebenkin", craft: "ISS" },
-    { name: "Butch Wilmore", craft: "ISS" },
-    { name: "Sunita Williams", craft: "ISS" },
-    { name: "Li Guangsu", craft: "Tiangong" },
-    { name: "Li Cong", craft: "Tiangong" },
-    { name: "Ye Guangfu", craft: "Tiangong" }
+    { name: "Sergey Kud-Sverchkov", craft: "ISS" },
+    { name: "Sophie Adenot", craft: "ISS" },
+    { name: "Andrey Fedyaev", craft: "ISS" },
+    { name: "Jack Hathaway", craft: "ISS" },
+    { name: "Jessica Meir", craft: "ISS" },
+    { name: "Sergei Mikayev", craft: "ISS" },
+    { name: "Christopher Williams", craft: "ISS" },
+    { name: "Zhu Yangzhu", craft: "Tiangong" },
+    { name: "Zhang Zhiyuan", craft: "Tiangong" },
+    { name: "Lai Ka-ying", craft: "Tiangong" }
   ]
 };
 
@@ -105,7 +104,6 @@ export async function getPeopleInSpace(): Promise<SpaceData> {
     throw new Error("API response not successful");
   } catch (error) {
     console.error("Failed to fetch people in space:", error);
-    // Usar datos de respaldo en caso de error
     cachedData = {
       ...fallbackData,
       timestamp: new Date().toISOString(),
