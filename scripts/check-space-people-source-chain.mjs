@@ -2,8 +2,12 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
 const endpointSource = readFileSync("functions/api/space-people.ts", "utf8");
+const auditSource = readFileSync("docs/space-people-source-audit.md", "utf8");
 
 const requiredEndpointTokens = [
+  "type SourceAdapter",
+  "type SourceCoverage",
+  "type SourceDecision",
   "DEFAULT_PRIMARY_API_URL",
   "ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100",
   "SOURCE_LAUNCH_LIBRARY",
@@ -14,46 +18,110 @@ const requiredEndpointTokens = [
   "static-fallback",
   "SPACE_PEOPLE_PRIMARY_API",
   "SPACE_PEOPLE_OPEN_NOTIFY_API",
+  "dedupePeople",
+  "validatePayload",
   "normalizeLaunchLibraryData",
   "normalizeOpenNotifyData",
   "fetchSpacePeopleSource",
+  "source registry",
   "status: \"live\"",
   "status: \"fallback\"",
   "isFallback: false",
   "isFallback: true",
   "lastSuccessfulUpdate: timestamp",
-  "lastSuccessfulUpdate: null"
+  "lastSuccessfulUpdate: null",
+  "success (fallback; stale snapshot)"
 ];
 
 for (const token of requiredEndpointTokens) {
   assert.ok(endpointSource.includes(token), `functions/api/space-people.ts is missing ${token}`);
 }
 
+const requiredAuditTokens = [
+  "Humans currently in orbit",
+  "Suborbital flights are intentionally excluded",
+  "Launch Library 2",
+  "Open Notify",
+  "NASA public APIs",
+  "Tiangong",
+  "WhereTheISS",
+  "Static fallback",
+  "Runtime architecture rule"
+];
+
+for (const token of requiredAuditTokens) {
+  assert.ok(auditSource.includes(token), `docs/space-people-source-audit.md is missing ${token}`);
+}
+
 const primaryIndex = endpointSource.indexOf("source: SOURCE_LAUNCH_LIBRARY");
+const customIndex = endpointSource.indexOf("source: SOURCE_CUSTOM");
 const secondaryIndex = endpointSource.indexOf("source: SOURCE_OPEN_NOTIFY");
 const fallbackIndex = endpointSource.indexOf("source: SOURCE_FALLBACK");
+const validateIndex = endpointSource.indexOf("validatePayload");
+const dedupeIndex = endpointSource.indexOf("dedupePeople");
 
 assert.ok(primaryIndex > -1, "primary source is not declared");
-assert.ok(secondaryIndex > primaryIndex, "Open Notify must remain after the primary live source");
+assert.ok(customIndex > primaryIndex, "custom source must remain after the primary live source");
+assert.ok(secondaryIndex > customIndex, "Open Notify must remain after the custom source");
 assert.ok(fallbackIndex > secondaryIndex, "static fallback must remain after all live sources");
+assert.ok(validateIndex > -1, "payload validation must exist");
+assert.ok(dedupeIndex > -1, "people dedupe must exist");
 
-const createLivePayload = (source) => ({
-  number: 1,
-  people: [{ name: "Mock Astronaut", craft: "Mock Craft" }],
-  message: "success",
-  status: "live",
-  source,
-  isFallback: false,
-  timestamp: "2026-06-06T00:00:00.000Z",
-  lastSuccessfulUpdate: "2026-06-06T00:00:00.000Z",
-  responseTime: 1,
-  error: null
-});
+const normalizeName = (name) =>
+  name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .trim()
+    .toLowerCase();
+
+const dedupePeople = (people) => {
+  const seen = new Set();
+  const deduped = [];
+
+  for (const person of people) {
+    const key = normalizeName(person.name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    deduped.push({ name: person.name.trim(), craft: person.craft.trim() || "Unknown spacecraft" });
+  }
+
+  return deduped;
+};
+
+const validatePayload = (payload, source) => {
+  const people = dedupePeople(payload.people);
+
+  if (!people.length) {
+    throw new Error(`${source} returned no people`);
+  }
+
+  if (payload.number !== people.length) {
+    throw new Error(`${source} count mismatch: number=${payload.number}, people.length=${people.length}`);
+  }
+
+  return { ...payload, number: people.length, people };
+};
+
+const createLivePayload = (source, people = [{ name: "Mock Astronaut", craft: "Mock Craft" }]) => {
+  const validated = validatePayload({ number: people.length, people, message: "success" }, source);
+
+  return {
+    ...validated,
+    status: "live",
+    source,
+    isFallback: false,
+    timestamp: "2026-06-06T00:00:00.000Z",
+    lastSuccessfulUpdate: "2026-06-06T00:00:00.000Z",
+    responseTime: 1,
+    error: null
+  };
+};
 
 const createFallbackPayload = (errors) => ({
-  number: 1,
+  number: 10,
   people: [{ name: "Fallback Astronaut", craft: "Fallback Craft" }],
-  message: "success (fallback)",
+  message: "success (fallback; stale snapshot)",
   status: "fallback",
   source: "static-fallback",
   isFallback: true,
@@ -72,7 +140,7 @@ const resolveMockChain = async (sources) => {
         throw new Error(`${source.source} failed`);
       }
 
-      return createLivePayload(source.source);
+      return createLivePayload(source.source, source.people);
     } catch (error) {
       errors.push(error instanceof Error ? error.message : "Unknown upstream error");
     }
@@ -103,6 +171,23 @@ assert.equal(secondaryLive.isFallback, false);
 assert.equal(secondaryLive.error, null);
 assert.equal(secondaryLive.lastSuccessfulUpdate, secondaryLive.timestamp);
 
+const dedupedLive = createLivePayload("launch-library-2", [
+  { name: "Jessica Meir", craft: "ISS" },
+  { name: " Jessica   Meir ", craft: "ISS" },
+  { name: "Sophie Adenot", craft: "ISS" }
+]);
+
+assert.equal(dedupedLive.number, 2);
+assert.deepEqual(
+  dedupedLive.people.map((person) => person.name),
+  ["Jessica Meir", "Sophie Adenot"]
+);
+
+assert.throws(
+  () => validatePayload({ number: 3, people: [{ name: "One", craft: "ISS" }], message: "success" }, "mock-source"),
+  /count mismatch/
+);
+
 const allFailFallback = await resolveMockChain([
   { source: "launch-library-2", fails: true },
   { source: "open-notify", fails: true }
@@ -115,4 +200,4 @@ assert.equal(allFailFallback.lastSuccessfulUpdate, null);
 assert.match(allFailFallback.error, /launch-library-2 failed/);
 assert.match(allFailFallback.error, /open-notify failed/);
 
-console.log("Space people source chain mock check passed.");
+console.log("Space people source architecture check passed.");
