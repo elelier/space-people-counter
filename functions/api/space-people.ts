@@ -22,10 +22,19 @@ type SpaceData = {
   error: string | null;
 };
 
-type SpacePeopleSource = {
+type SpacePeoplePayload = Pick<SpaceData, "number" | "people" | "message">;
+
+type SourceCoverage = "orbital-people" | "iss-only-or-open-notify-compatible";
+
+type SourceDecision = "primary" | "secondary" | "custom";
+
+type SourceAdapter = {
   source: string;
+  label: string;
   url: string;
-  normalize: (data: unknown) => Pick<SpaceData, "number" | "people" | "message"> | null;
+  coverage: SourceCoverage;
+  decision: SourceDecision;
+  normalize: (data: unknown) => SpacePeoplePayload | null;
 };
 
 const DEFAULT_PRIMARY_API_URL = "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100";
@@ -36,19 +45,19 @@ const SOURCE_CUSTOM = "custom-space-people-api";
 const SOURCE_FALLBACK = "static-fallback";
 const REQUEST_TIMEOUT_MS = 5000;
 
+// Static fallback snapshot from the 2026-06-06 source audit. It is intentionally marked as fallback/stale.
+// Product semantics: humans currently in orbit aboard active stations or orbital missions; suborbital flights excluded.
 const fallbackPeople: AstronautData[] = [
-  { name: "Oleg Kononenko", craft: "ISS" },
-  { name: "Nikolai Chub", craft: "ISS" },
-  { name: "Tracy Caldwell Dyson", craft: "ISS" },
-  { name: "Matthew Dominick", craft: "ISS" },
-  { name: "Michael Barratt", craft: "ISS" },
-  { name: "Jeanette Epps", craft: "ISS" },
-  { name: "Alexander Grebenkin", craft: "ISS" },
-  { name: "Butch Wilmore", craft: "ISS" },
-  { name: "Sunita Williams", craft: "ISS" },
-  { name: "Li Guangsu", craft: "Tiangong" },
-  { name: "Li Cong", craft: "Tiangong" },
-  { name: "Ye Guangfu", craft: "Tiangong" }
+  { name: "Sergey Kud-Sverchkov", craft: "ISS" },
+  { name: "Sophie Adenot", craft: "ISS" },
+  { name: "Andrey Fedyaev", craft: "ISS" },
+  { name: "Jack Hathaway", craft: "ISS" },
+  { name: "Jessica Meir", craft: "ISS" },
+  { name: "Sergei Mikayev", craft: "ISS" },
+  { name: "Christopher Williams", craft: "ISS" },
+  { name: "Zhu Yangzhu", craft: "Tiangong" },
+  { name: "Zhang Zhiyuan", craft: "Tiangong" },
+  { name: "Lai Ka-ying", craft: "Tiangong" }
 ];
 
 const jsonResponse = (data: unknown, cacheSeconds: number, status = 200) => {
@@ -72,6 +81,50 @@ const getStringValue = (value: unknown): string | null => {
 const getNamedObjectValue = (value: unknown): string | null => {
   if (!value || typeof value !== "object") return null;
   return getStringValue((value as { name?: unknown }).name);
+};
+
+const getNameKey = (name: string): string => {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, " ")
+    .trim()
+    .toLowerCase();
+};
+
+const dedupePeople = (people: AstronautData[]): AstronautData[] => {
+  const seen = new Set<string>();
+  const deduped: AstronautData[] = [];
+
+  for (const person of people) {
+    const key = getNameKey(person.name);
+    if (!key || seen.has(key)) continue;
+
+    seen.add(key);
+    deduped.push({
+      name: person.name.trim(),
+      craft: person.craft.trim() || "Unknown spacecraft"
+    });
+  }
+
+  return deduped;
+};
+
+const validatePayload = (payload: SpacePeoplePayload | null, source: string): SpacePeoplePayload | null => {
+  if (!payload) return null;
+
+  const people = dedupePeople(payload.people);
+  if (!people.length) return null;
+
+  if (payload.number !== people.length) {
+    throw new Error(`${source} count mismatch: number=${payload.number}, people.length=${people.length}`);
+  }
+
+  return {
+    ...payload,
+    number: people.length,
+    people
+  };
 };
 
 const getCraftFromLaunchLibraryPerson = (person: Record<string, unknown>): string => {
@@ -100,7 +153,7 @@ const getCraftFromLaunchLibraryPerson = (person: Record<string, unknown>): strin
   return "Unknown spacecraft";
 };
 
-const normalizeOpenNotifyData = (data: unknown): Pick<SpaceData, "number" | "people" | "message"> | null => {
+const normalizeOpenNotifyData = (data: unknown): SpacePeoplePayload | null => {
   if (!data || typeof data !== "object") return null;
 
   const record = data as { people?: unknown; number?: unknown; message?: unknown };
@@ -115,14 +168,10 @@ const normalizeOpenNotifyData = (data: unknown): Pick<SpaceData, "number" | "peo
   const number = typeof record.number === "number" ? record.number : people.length;
   const message = typeof record.message === "string" ? record.message : "success";
 
-  if (!people.length && number === 0) {
-    return null;
-  }
-
-  return { number, people, message };
+  return validatePayload({ number, people, message }, SOURCE_OPEN_NOTIFY);
 };
 
-const normalizeLaunchLibraryData = (data: unknown): Pick<SpaceData, "number" | "people" | "message"> | null => {
+const normalizeLaunchLibraryData = (data: unknown): SpacePeoplePayload | null => {
   if (!data || typeof data !== "object") return null;
 
   const record = data as { results?: unknown; count?: unknown };
@@ -145,15 +194,11 @@ const normalizeLaunchLibraryData = (data: unknown): Pick<SpaceData, "number" | "
 
   const number = typeof record.count === "number" ? record.count : people.length;
 
-  if (!people.length && number === 0) {
-    return null;
-  }
-
-  return { number, people, message: "success" };
+  return validatePayload({ number, people, message: "success" }, SOURCE_LAUNCH_LIBRARY);
 };
 
 const withReliabilityMetadata = (
-  data: Pick<SpaceData, "number" | "people" | "message">,
+  data: SpacePeoplePayload,
   metadata: Pick<SpaceData, "status" | "source" | "isFallback" | "timestamp" | "lastSuccessfulUpdate" | "responseTime" | "error">
 ): SpaceData => ({
   ...data,
@@ -176,8 +221,8 @@ const fetchWithTimeout = async (url: string, timeoutMs = REQUEST_TIMEOUT_MS): Pr
 };
 
 const fetchSpacePeopleSource = async (
-  source: SpacePeopleSource
-): Promise<Pick<SpaceData, "number" | "people" | "message" | "source">> => {
+  source: SourceAdapter
+): Promise<SpacePeoplePayload & Pick<SpaceData, "source">> => {
   const response = await fetchWithTimeout(source.url);
 
   if (!response.ok) {
@@ -193,7 +238,7 @@ const fetchSpacePeopleSource = async (
   return { ...normalized, source: source.source };
 };
 
-const uniqueSources = (sources: SpacePeopleSource[]): SpacePeopleSource[] => {
+const uniqueSources = (sources: SourceAdapter[]): SourceAdapter[] => {
   const seen = new Set<string>();
   return sources.filter((source) => {
     const key = `${source.source}:${source.url}`;
@@ -203,27 +248,36 @@ const uniqueSources = (sources: SpacePeopleSource[]): SpacePeopleSource[] => {
   });
 };
 
-const getSpacePeopleSources = (env: PagesContext["env"]): SpacePeopleSource[] => {
+const getSpacePeopleSources = (env: PagesContext["env"]): SourceAdapter[] => {
   const customUrl = env.SPACE_PEOPLE_API ?? env.NEXT_PUBLIC_SPACE_PEOPLE_API;
 
   return uniqueSources([
     {
       source: SOURCE_LAUNCH_LIBRARY,
+      label: "The Space Devs / Launch Library 2",
       url: env.SPACE_PEOPLE_PRIMARY_API ?? DEFAULT_PRIMARY_API_URL,
+      coverage: "orbital-people",
+      decision: "primary",
       normalize: normalizeLaunchLibraryData
     },
     ...(customUrl
       ? [
           {
             source: SOURCE_CUSTOM,
+            label: "Custom Open Notify-compatible people endpoint",
             url: customUrl,
+            coverage: "iss-only-or-open-notify-compatible" as SourceCoverage,
+            decision: "custom" as SourceDecision,
             normalize: normalizeOpenNotifyData
           }
         ]
       : []),
     {
       source: SOURCE_OPEN_NOTIFY,
+      label: "Open Notify astronauts endpoint",
       url: env.SPACE_PEOPLE_OPEN_NOTIFY_API ?? DEFAULT_OPEN_NOTIFY_API_URL,
+      coverage: "iss-only-or-open-notify-compatible",
+      decision: "secondary",
       normalize: normalizeOpenNotifyData
     }
   ]);
@@ -270,7 +324,7 @@ export const onRequestGet = async ({ env }: PagesContext) => {
     withReliabilityMetadata(
       {
         number: fallbackPeople.length,
-        message: "success (fallback)",
+        message: "success (fallback; stale snapshot)",
         people: fallbackPeople
       },
       {
