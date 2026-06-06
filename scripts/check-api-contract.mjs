@@ -14,7 +14,7 @@ const checks = [
   {
     path: "functions/api/space-people.ts",
     fields: requiredEndpointFields,
-    extra: ["open-notify", "fallback"]
+    extra: ["launch-library-2", "open-notify", "fallback"]
   },
   {
     path: "functions/api/iss-location.ts",
@@ -39,7 +39,7 @@ const checks = [
   {
     path: "docs/api-data-reliability-contract.md",
     fields: ["/api/space-people", "/api/iss-location", "/api/health", "source", "isFallback"],
-    extra: ["No Supabase", "No Core DB"]
+    extra: ["launch-library-2", "No Supabase", "No Core DB"]
   }
 ];
 
