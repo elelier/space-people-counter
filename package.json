@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
+    "check:api-contract": "node scripts/check-api-contract.mjs",
     "build:analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {

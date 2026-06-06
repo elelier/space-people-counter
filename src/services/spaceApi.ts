@@ -7,6 +7,13 @@ export interface SpaceData {
   number: number;
   people: AstronautData[];
   message: string;
+  status?: "live" | "fallback";
+  source?: string;
+  isFallback?: boolean;
+  timestamp?: string;
+  lastSuccessfulUpdate?: string | null;
+  responseTime?: number;
+  error?: string | null;
 }
 
 const API_URL = "/api/space-people";
@@ -19,6 +26,13 @@ let cacheTimestamp = 0;
 const fallbackData: SpaceData = {
   number: 12,
   message: "success (fallback)",
+  status: "fallback",
+  source: "client-static-fallback",
+  isFallback: true,
+  timestamp: new Date().toISOString(),
+  lastSuccessfulUpdate: null,
+  responseTime: 0,
+  error: "Client could not reach /api/space-people",
   people: [
     { name: "Oleg Kononenko", craft: "ISS" },
     { name: "Nikolai Chub", craft: "ISS" },
@@ -51,7 +65,20 @@ function normalizeSpaceData(data: any): SpaceData | null {
     return null;
   }
 
-  return { number, people, message };
+  const isFallback = typeof data.isFallback === "boolean" ? data.isFallback : message.toLowerCase().includes("fallback");
+
+  return {
+    number,
+    people,
+    message,
+    status: data.status === "fallback" || data.status === "live" ? data.status : isFallback ? "fallback" : "live",
+    source: typeof data.source === "string" ? data.source : isFallback ? "unknown-fallback" : "unknown-live",
+    isFallback,
+    timestamp: typeof data.timestamp === "string" ? data.timestamp : new Date().toISOString(),
+    lastSuccessfulUpdate: typeof data.lastSuccessfulUpdate === "string" ? data.lastSuccessfulUpdate : null,
+    responseTime: typeof data.responseTime === "number" ? data.responseTime : 0,
+    error: typeof data.error === "string" ? data.error : null
+  };
 }
 
 export async function getPeopleInSpace(): Promise<SpaceData> {
@@ -74,13 +101,17 @@ export async function getPeopleInSpace(): Promise<SpaceData> {
         return normalized;
       }
     }
-    
-    throw new Error('API response not successful');
+
+    throw new Error("API response not successful");
   } catch (error) {
-    console.error('Failed to fetch people in space:', error);
+    console.error("Failed to fetch people in space:", error);
     // Usar datos de respaldo en caso de error
-    cachedData = fallbackData;
+    cachedData = {
+      ...fallbackData,
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : fallbackData.error
+    };
     cacheTimestamp = now;
-    return fallbackData;
+    return cachedData;
   }
 }

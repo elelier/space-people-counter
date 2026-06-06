@@ -34,14 +34,14 @@ export function SpaceCounter({
       setError(false);
 
       const newData = await getPeopleInSpace();
-      const usingFallback = newData.message.toLowerCase().includes('fallback');
+      const usingFallback = newData.isFallback === true || newData.message.toLowerCase().includes("fallback");
       setError(usingFallback);
 
       setData(newData);
       setAnimateNumber(true);
       setTimeout(() => setAnimateNumber(false), 1000);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error("Error refreshing data:", error);
       setError(true);
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ export function SpaceCounter({
               className="text-white hover:bg-white/10 flex-shrink-0 ml-2"
               title="Actualizar datos"
             >
-              <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCcw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </div>
 
@@ -172,7 +172,7 @@ export function SpaceCounter({
                     <div className="mt-auto">
                       <div className="flex items-center gap-2 w-full mb-2">
                         <div className="text-xs text-blue-300 whitespace-nowrap">
-                          {missionDetails ? `${missionDetails.progress}%` : ''}
+                          {missionDetails ? `${missionDetails.progress}%` : ""}
                         </div>
                         <Progress
                           value={missionDetails?.progress || 50}

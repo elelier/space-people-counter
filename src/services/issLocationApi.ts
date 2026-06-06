@@ -5,6 +5,12 @@ export interface ISSLocationData {
   };
   message: string;
   timestamp: number;
+  status?: "live" | "fallback";
+  source?: string;
+  isFallback?: boolean;
+  lastSuccessfulUpdate?: string | null;
+  responseTime?: number;
+  error?: string | null;
   altitude?: number;
   velocity?: number;
   visibility?: string;
@@ -49,65 +55,99 @@ function getFallbackLocation(): {latitude: string, longitude: string} {
   };
 }
 
+function normalizeISSLocation(data: any): ISSLocationData | null {
+  if (!data || typeof data !== "object") return null;
+
+  const nestedPosition = data.iss_position;
+  const latitude = typeof nestedPosition?.latitude === "string"
+    ? nestedPosition.latitude
+    : data.latitude?.toString();
+  const longitude = typeof nestedPosition?.longitude === "string"
+    ? nestedPosition.longitude
+    : data.longitude?.toString();
+
+  if (!latitude || !longitude) return null;
+
+  const message = typeof data.message === "string" ? data.message : "success";
+  const isFallback = typeof data.isFallback === "boolean"
+    ? data.isFallback
+    : message.toLowerCase().includes("simulated") || message.toLowerCase().includes("fallback");
+
+  return {
+    message,
+    timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),
+    status: data.status === "fallback" || data.status === "live" ? data.status : isFallback ? "fallback" : "live",
+    source: typeof data.source === "string" ? data.source : isFallback ? "unknown-fallback" : "unknown-live",
+    isFallback,
+    lastSuccessfulUpdate: typeof data.lastSuccessfulUpdate === "string" ? data.lastSuccessfulUpdate : null,
+    responseTime: typeof data.responseTime === "number" ? data.responseTime : 0,
+    error: typeof data.error === "string" ? data.error : null,
+    iss_position: {
+      latitude,
+      longitude
+    },
+    altitude: data.altitude,
+    velocity: data.velocity,
+    visibility: data.visibility,
+    footprint: data.footprint,
+    solar_lat: data.solar_lat,
+    solar_lon: data.solar_lon,
+    units: data.units
+  };
+}
+
 /**
- * Get the current ISS location from the wheretheiss.at API
- * @returns Promise<ISSLocationData> with ISS location data
+ * Get the current ISS location from the Cloudflare Pages Function.
+ * @returns Promise<ISSLocationData> with ISS location data and reliability metadata
  */
 export async function getISSLocation(): Promise<ISSLocationData> {
   const currentTime = Date.now();
 
   // Return cached data if it's still valid
   if (issLocationCache && (currentTime - lastCacheTime < CACHE_TTL)) {
-    console.log('Using cached ISS location data');
+    console.log("Using cached ISS location data");
     return issLocationCache;
   }
 
   try {
-    // Primary API: wheretheiss.at - More reliable and provides additional data
-    console.log('Fetching from ISS API...');
+    console.log("Fetching from ISS API function...");
     const response = await fetch(ISS_API_URL, {
-      cache: 'no-store', // Always get fresh data
+      cache: "no-store", // Always get fresh data
     });
 
     if (response.ok) {
       const data = await response.json();
+      const issData = normalizeISSLocation(data);
 
-      // Convert to our internal format
-      const issData: ISSLocationData = {
-        message: "success",
-        timestamp: Date.now(),
-        iss_position: {
-          latitude: data.latitude.toString(),
-          longitude: data.longitude.toString()
-        },
-        altitude: data.altitude,
-        velocity: data.velocity,
-        visibility: data.visibility,
-        footprint: data.footprint,
-        solar_lat: data.solar_lat,
-        solar_lon: data.solar_lon,
-        units: data.units
-      };
+      if (!issData) {
+        throw new Error("Invalid /api/iss-location response");
+      }
 
       // Update cache
       issLocationCache = issData;
       lastCacheTime = currentTime;
 
-      console.log('Successfully fetched ISS location from wheretheiss.at');
+      console.log(`Successfully fetched ISS location from ${issData.source}`);
       return issData;
-    } else {
-      throw new Error(`wheretheiss.at API returned status: ${response.status}`);
     }
+
+    throw new Error(`/api/iss-location returned status: ${response.status}`);
   } catch (error) {
-    console.error('wheretheiss.at API failed:', error);
-    
+    console.error("ISS API function failed:", error);
+
     // Si la API falla, usar datos de respaldo simulados
     const fallbackPosition = getFallbackLocation();
-    console.warn('Using simulated ISS location data');
+    console.warn("Using simulated ISS location data");
 
     const simulatedData: ISSLocationData = {
       message: "success (simulated)",
       timestamp: Date.now(),
+      status: "fallback",
+      source: "client-simulated-fallback",
+      isFallback: true,
+      lastSuccessfulUpdate: null,
+      responseTime: 0,
+      error: error instanceof Error ? error.message : "Client could not reach /api/iss-location",
       iss_position: fallbackPosition,
       altitude: 408, // Approximate ISS altitude in km
       velocity: 27600, // Approximate ISS velocity in km/h

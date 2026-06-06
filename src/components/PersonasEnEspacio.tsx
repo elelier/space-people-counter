@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getPeopleInSpace, SpaceData } from "@/services/spaceApi";
-import { RefreshCcw, Users, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { RefreshCcw, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { UpdateCountdown } from "./UpdateCountdown";
 import { Alert, AlertType } from "@/components/ui/alert";
 
@@ -38,9 +38,9 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
   // Estado para el componente Alert
   const [showAlert, setShowAlert] = useState(false);
   const [alertInfo, setAlertInfo] = useState<AlertInfo>({
-    type: 'info',
-    title: '',
-    message: ''
+    type: "info",
+    title: "",
+    message: ""
   });
 
   // Referencia para almacenar el número anterior de astronautas
@@ -63,7 +63,7 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
 
     try {
       const newData: SpaceData = await getPeopleInSpace();
-      const usingFallback = newData.message.toLowerCase().includes('fallback');
+      const usingFallback = newData.isFallback === true || newData.message.toLowerCase().includes("fallback");
       setError(usingFallback);
 
       // Sin cambios en los datos, salir temprano
@@ -88,21 +88,21 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
         if (newData.number > prevNumberRef.current) {
           const newAstronautNames = newAstronauts.map((a: AstronautData) => a.name);
           const message = newAstronautNames.length > 0
-            ? `Nuevos astronautas: ${newAstronautNames.join(', ')}`
-            : 'Nuevos astronautas han llegado al espacio';
+            ? `Nuevos astronautas: ${newAstronautNames.join(", ")}`
+            : "Nuevos astronautas han llegado al espacio";
 
           showNotification(
-            'success',
+            "success",
             `¡El número de astronautas ha aumentado a ${newData.number}!`,
             message
           );
         } else if (newData.number < prevNumberRef.current) {
           const message = departedAstronauts.length > 0
-            ? `Astronautas que han regresado: ${departedAstronauts.join(', ')}`
-            : 'Algunos astronautas han regresado a la Tierra';
+            ? `Astronautas que han regresado: ${departedAstronauts.join(", ")}`
+            : "Algunos astronautas han regresado a la Tierra";
 
           showNotification(
-            'warning',
+            "warning",
             `El número de astronautas ha disminuido a ${newData.number}`,
             message
           );
@@ -121,15 +121,15 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
       // Ya no estamos en el montaje inicial
       isInitialMount.current = false;
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error("Error refreshing data:", error);
       setError(true);
 
       // Notificar error si no es el montaje inicial
       if (!isInitialMount.current) {
         showNotification(
-          'error',
-          'Error al actualizar datos',
-          'No se pudo obtener información actualizada de astronautas'
+          "error",
+          "Error al actualizar datos",
+          "No se pudo obtener información actualizada de astronautas"
         );
       }
     } finally {
@@ -198,7 +198,7 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
                 className="text-white hover:bg-blue-800/30 flex-shrink-0 ml-2 button-hover"
                 title="Actualizar datos"
               >
-                <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : 'icon-hover'}`} />
+                <RefreshCcw className={`w-5 h-5 ${loading ? "animate-spin" : "icon-hover"}`} />
               </Button>
             </div>
 
