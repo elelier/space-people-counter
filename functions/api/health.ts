@@ -22,6 +22,8 @@ type HealthCheckResult = {
   error: string | null;
 };
 
+const SPACE_PEOPLE_PRIMARY_API = "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100";
+
 const jsonResponse = (data: unknown, cacheSeconds: number, status = 200) => {
   return new Response(JSON.stringify(data), {
     status,
@@ -93,6 +95,7 @@ export const onRequestGet = async () => {
   const startedAt = Date.now();
   const checks = await Promise.all([
     checkApiHealth("ISS Location (wheretheiss.at)", "https://api.wheretheiss.at/v1/satellites/25544", "wheretheiss"),
+    checkApiHealth("People in Space (launch-library-2)", SPACE_PEOPLE_PRIMARY_API, "launch-library-2"),
     checkApiHealth("People in Space (open-notify)", "https://api.open-notify.org/astros.json", "open-notify"),
     checkApiHealth("ISS Location Backup (open-notify)", "https://api.open-notify.org/iss-now.json", "open-notify")
   ]);
