@@ -96,8 +96,7 @@ export const onRequestGet = async () => {
   const checks = await Promise.all([
     checkApiHealth("ISS Location (wheretheiss.at)", "https://api.wheretheiss.at/v1/satellites/25544", "wheretheiss"),
     checkApiHealth("People in Space (launch-library-2)", SPACE_PEOPLE_PRIMARY_API, "launch-library-2"),
-    checkApiHealth("People in Space (open-notify)", "https://api.open-notify.org/astros.json", "open-notify"),
-    checkApiHealth("ISS Location Backup (open-notify)", "https://api.open-notify.org/iss-now.json", "open-notify")
+    checkApiHealth("People in Space (open-notify)", "https://api.open-notify.org/astros.json", "open-notify")
   ]);
 
   const onlineCount = checks.filter((check) => check.status === "online").length;
