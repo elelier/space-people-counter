@@ -248,6 +248,7 @@ const uniqueSources = (sources: SourceAdapter[]): SourceAdapter[] => {
   });
 };
 
+// source registry: declared in priority order, then normalized/validated before any response is emitted.
 const getSpacePeopleSources = (env: PagesContext["env"]): SourceAdapter[] => {
   const customUrl = env.SPACE_PEOPLE_API ?? env.NEXT_PUBLIC_SPACE_PEOPLE_API;
 
