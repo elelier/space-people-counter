@@ -171,20 +171,37 @@ assert.equal(secondaryLive.isFallback, false);
 assert.equal(secondaryLive.error, null);
 assert.equal(secondaryLive.lastSuccessfulUpdate, secondaryLive.timestamp);
 
-const dedupedLive = createLivePayload("launch-library-2", [
+const dedupedPeople = dedupePeople([
   { name: "Jessica Meir", craft: "ISS" },
   { name: " Jessica   Meir ", craft: "ISS" },
   { name: "Sophie Adenot", craft: "ISS" }
 ]);
 
-assert.equal(dedupedLive.number, 2);
+assert.equal(dedupedPeople.length, 2);
 assert.deepEqual(
-  dedupedLive.people.map((person) => person.name),
+  dedupedPeople.map((person) => person.name),
   ["Jessica Meir", "Sophie Adenot"]
 );
 
 assert.throws(
   () => validatePayload({ number: 3, people: [{ name: "One", craft: "ISS" }], message: "success" }, "mock-source"),
+  /count mismatch/
+);
+
+assert.throws(
+  () =>
+    validatePayload(
+      {
+        number: 3,
+        people: [
+          { name: "Jessica Meir", craft: "ISS" },
+          { name: "Jessica Meir", craft: "ISS" },
+          { name: "Sophie Adenot", craft: "ISS" }
+        ],
+        message: "success"
+      },
+      "mock-source"
+    ),
   /count mismatch/
 );
 
