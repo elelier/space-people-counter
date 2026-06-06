@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",
     "check:api-contract": "node scripts/check-api-contract.mjs",
+    "check:space-people-sources": "node scripts/check-space-people-source-chain.mjs",
     "build:analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
