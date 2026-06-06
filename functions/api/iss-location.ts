@@ -7,10 +7,18 @@ type ISSPosition = {
   longitude: string;
 };
 
+type DataStatus = "live" | "fallback";
+
 type ISSLocationData = {
   iss_position: ISSPosition;
   message: string;
   timestamp: number;
+  status: DataStatus;
+  source: string;
+  isFallback: boolean;
+  lastSuccessfulUpdate: string | null;
+  responseTime: number;
+  error: string | null;
   altitude?: number;
   velocity?: number;
   visibility?: string;
@@ -21,6 +29,8 @@ type ISSLocationData = {
 };
 
 const DEFAULT_ISS_API_URL = "https://api.wheretheiss.at/v1/satellites/25544";
+const SOURCE_WHERE_THE_ISS = "wheretheiss";
+const SOURCE_SIMULATED_FALLBACK = "simulated-fallback";
 
 const fallbackLocations: Array<{ lat: string; lng: string }> = [
   { lat: "28.4057", lng: "-80.6059" },
@@ -56,43 +66,69 @@ const getFallbackLocation = (): ISSPosition => {
   };
 };
 
+const getErrorMessage = (error: unknown): string => {
+  return error instanceof Error ? error.message : "Unknown upstream error";
+};
+
 export const onRequestGet = async ({ env }: PagesContext) => {
   const apiUrl = env.ISS_API || env.NEXT_PUBLIC_ISS_API || DEFAULT_ISS_API_URL;
+  const startedAt = Date.now();
 
   try {
     const response = await fetch(apiUrl, {
       headers: { accept: "application/json" }
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      const issData: ISSLocationData = {
-        message: "success",
-        timestamp: Date.now(),
-        iss_position: {
-          latitude: data.latitude?.toString() ?? "0",
-          longitude: data.longitude?.toString() ?? "0"
-        },
-        altitude: data.altitude,
-        velocity: data.velocity,
-        visibility: data.visibility,
-        footprint: data.footprint,
-        solar_lat: data.solar_lat,
-        solar_lon: data.solar_lon,
-        units: data.units
-      };
-
-      return jsonResponse(issData, 5);
+    if (!response.ok) {
+      throw new Error(`ISS API responded with ${response.status}`);
     }
 
-    throw new Error(`ISS API responded with ${response.status}`);
+    const data = await response.json();
+    const latitude = data.latitude?.toString();
+    const longitude = data.longitude?.toString();
+
+    if (!latitude || !longitude) {
+      throw new Error("Invalid ISS API response");
+    }
+
+    const lastSuccessfulUpdate = new Date().toISOString();
+    const issData: ISSLocationData = {
+      message: "success",
+      timestamp: Date.now(),
+      status: "live",
+      source: SOURCE_WHERE_THE_ISS,
+      isFallback: false,
+      lastSuccessfulUpdate,
+      responseTime: Date.now() - startedAt,
+      error: null,
+      iss_position: {
+        latitude,
+        longitude
+      },
+      altitude: data.altitude,
+      velocity: data.velocity,
+      visibility: data.visibility,
+      footprint: data.footprint,
+      solar_lat: data.solar_lat,
+      solar_lon: data.solar_lon,
+      units: data.units
+    };
+
+    return jsonResponse(issData, 5);
   } catch (error) {
+    const errorMessage = getErrorMessage(error);
     console.error("Failed to fetch ISS location:", error);
 
     const fallbackPosition = getFallbackLocation();
     const simulatedData: ISSLocationData = {
       message: "success (simulated)",
       timestamp: Date.now(),
+      status: "fallback",
+      source: SOURCE_SIMULATED_FALLBACK,
+      isFallback: true,
+      lastSuccessfulUpdate: null,
+      responseTime: Date.now() - startedAt,
+      error: errorMessage,
       iss_position: fallbackPosition,
       altitude: 408,
       velocity: 27600,
