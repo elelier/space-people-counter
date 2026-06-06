@@ -59,6 +59,12 @@ const issFacts = [
 const defaultISSLocation: ISSLocationData = {
   message: "success",
   timestamp: Math.floor(Date.now() / 1000),
+  status: "fallback",
+  source: "client-default",
+  isFallback: true,
+  lastSuccessfulUpdate: null,
+  responseTime: 0,
+  error: null,
   iss_position: {
     latitude: "0",
     longitude: "0"
@@ -85,6 +91,8 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   // Estado para mostrar detalles técnicos adicionales
   const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
 
+  const usingFallback = issLocation.isFallback === true || issLocation.message.includes("simulated");
+
   // Usando useCallback para evitar recreación de la función en cada render
   const fetchISSLocation = useCallback(async () => {
     try {
@@ -95,14 +103,14 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
 
       // Actualizar timestamp en el cliente para evitar problemas de hidratación
       const now = new Date();
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      setLastUpdated(hours + ':' + minutes + ':' + seconds);
+      const hours = now.getHours().toString().padStart(2, "0");
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      const seconds = now.getSeconds().toString().padStart(2, "0");
+      setLastUpdated(hours + ":" + minutes + ":" + seconds);
 
       if (mapError) setMapError(false);
     } catch (error) {
-      console.error('Error fetching ISS location:', error);
+      console.error("Error fetching ISS location:", error);
       setMapError(true);
     } finally {
       setLoading(false);
@@ -113,10 +121,10 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   useEffect(() => {
     // Establecer la hora inicial en el cliente
     const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const seconds = now.getSeconds().toString().padStart(2, '0');
-    setLastUpdated(hours + ':' + minutes + ':' + seconds);
+    const hours = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    const seconds = now.getSeconds().toString().padStart(2, "0");
+    setLastUpdated(hours + ":" + minutes + ":" + seconds);
 
     // Primera carga después de montarse el componente
     fetchISSLocation();
@@ -237,7 +245,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
           </div>
 
           {/* Información de coordenadas en versión móvil (antes del mapa) */}
-          <div className={`md:hidden grid grid-cols-2 gap-2 mb-4 ${expandedInfo ? 'block' : 'hidden'}`}>
+          <div className={`md:hidden grid grid-cols-2 gap-2 mb-4 ${expandedInfo ? "block" : "hidden"}`}>
             <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
               <div className="text-blue-300 text-xs mb-1">Latitud</div>
               <div className="text-white font-bold text-sm">{latitude.toFixed(4)}°</div>
@@ -258,7 +266,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                   <Button
                     variant="outline"
                     onClick={fetchISSLocation}
-                    className="text-white border-white hover:bg-white/10"
+                    className="border-blue-500 text-blue-300 hover:bg-blue-800/30"
                   >
                     <RefreshCcw className="w-4 h-4 mr-2" />
                     Reintentar
@@ -278,7 +286,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
           </div>
 
           {/* Ocultar en móvil si no está expandido */}
-          <div className={`${expandedInfo ? 'block' : 'hidden'} md:block`}>
+          <div className={`${expandedInfo ? "block" : "hidden"} md:block`}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
               <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
                 <div className="text-blue-300 text-xs mb-1">Latitud</div>
@@ -307,9 +315,9 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                 <div>
                   <span className="text-white text-sm font-medium">Estado:</span>
                   <span className="text-blue-100 ml-2 text-sm">
-                    {visibility === "daylight" ? 'Zona de día' :
-                     visibility === "eclipsed" ? 'Zona de noche' :
-                     'Desconocido'} • Órbita terrestre baja
+                    {visibility === "daylight" ? "Zona de día" :
+                     visibility === "eclipsed" ? "Zona de noche" :
+                     "Desconocido"} • Órbita terrestre baja
                   </span>
                 </div>
               </div>
@@ -349,7 +357,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                   <motion.div
                     className="bg-blue-800/20 rounded-lg border border-blue-800/30 mt-2 p-4"
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
@@ -376,7 +384,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                         <ul className="space-y-2 text-sm">
                           <li className="flex items-center justify-between">
                             <span className="text-gray-300">Fuente de datos:</span>
-                            <span className="text-white font-medium">{issLocation.message.includes("simulated") ? "Simulación" : "API en vivo"}</span>
+                            <span className="text-white font-medium">{usingFallback ? "Simulación" : "API en vivo"}</span>
                           </li>
                           <li className="flex items-center justify-between">
                             <span className="text-gray-300">ID de seguimiento:</span>
@@ -384,7 +392,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                           </li>
                           <li className="flex items-center justify-between">
                             <span className="text-gray-300">Precisión:</span>
-                            <span className="text-white font-medium">{issLocation.message.includes("simulated") ? "Baja" : "Alta"}</span>
+                            <span className="text-white font-medium">{usingFallback ? "Baja" : "Alta"}</span>
                           </li>
                         </ul>
                       </div>
@@ -418,7 +426,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                 <motion.div
                   className="bg-blue-900/30 rounded-lg overflow-hidden backdrop-blur-sm border border-blue-700/50"
                   initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
+                  animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
