@@ -44,7 +44,7 @@ const checks = [
   {
     path: "docs/space-people-source-audit.md",
     fields: ["Launch Library 2", "Open Notify", "NASA public APIs", "Tiangong", "WhereTheISS", "Static fallback"],
-    extra: ["Humans currently in orbit", "Runtime architecture rule"]
+    extra: ["Humans currently in orbit", "should stay organized"]
   }
 ];
 
