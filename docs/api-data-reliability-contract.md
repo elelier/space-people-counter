@@ -30,7 +30,7 @@ Every public `/api/*` response should include these fields when applicable:
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `status` | string | yes | Data status for the response. For data endpoints: `live` or `fallback`. For health: `healthy`, `degraded`, or `down`. |
-| `source` | string | yes | Source identifier such as `open-notify`, `wheretheiss`, `static-fallback`, `simulated-fallback`, or `cloudflare-pages-functions-health-check`. |
+| `source` | string | yes | Source identifier such as `launch-library-2`, `open-notify`, `wheretheiss`, `static-fallback`, `simulated-fallback`, or `cloudflare-pages-functions-health-check`. |
 | `isFallback` | boolean | yes | `true` only when the payload is fallback/simulated rather than verified live upstream data. |
 | `timestamp` | string or number | yes | Time the response was created. Data endpoint shape preserves existing timestamp compatibility. |
 | `lastSuccessfulUpdate` | string \| null | yes | Time of a successful upstream read within the current request. This is not durable across requests because no database/cache persistence is currently used. |
@@ -41,9 +41,20 @@ Important limitation: without persistence, `lastSuccessfulUpdate` is request-sco
 
 ## `/api/space-people`
 
+### Source order
+
+The endpoint now resolves people-in-space data through an explicit multi-source chain:
+
+1. Primary live source: Launch Library 2 / The Space Devs astronauts endpoint with `in_space=true`, exposed as `source: "launch-library-2"`.
+2. Optional custom source: `SPACE_PEOPLE_API` or `NEXT_PUBLIC_SPACE_PEOPLE_API`, exposed as `source: "custom-space-people-api"`.
+3. Secondary live source: Open Notify `https://api.open-notify.org/astros.json`, exposed as `source: "open-notify"`.
+4. Last-resort static fallback: local stale list, exposed as `source: "static-fallback"` and `isFallback: true`.
+
+Static fallback must only happen after every live source fails or returns invalid people data.
+
 ### Live response
 
-Expected when Open Notify returns valid people data.
+Expected when Launch Library 2, custom source, or Open Notify returns valid people data.
 
 ```json
 {
@@ -51,7 +62,7 @@ Expected when Open Notify returns valid people data.
   "people": [{ "name": "Example", "craft": "ISS" }],
   "message": "success",
   "status": "live",
-  "source": "open-notify",
+  "source": "launch-library-2",
   "isFallback": false,
   "timestamp": "2026-06-06T00:00:00.000Z",
   "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
@@ -60,9 +71,11 @@ Expected when Open Notify returns valid people data.
 }
 ```
 
+If Launch Library 2 fails but Open Notify succeeds, the same contract applies with `source: "open-notify"`, `status: "live"`, and `isFallback: false`.
+
 ### Fallback response
 
-Expected when Open Notify is down, times out, or returns invalid data. The endpoint intentionally preserves the current fallback people list but marks it explicitly.
+Expected when Launch Library 2, custom source if configured, and Open Notify are down, time out, or return invalid data. The endpoint intentionally preserves the current fallback people list but marks it explicitly.
 
 ```json
 {
@@ -75,7 +88,7 @@ Expected when Open Notify is down, times out, or returns invalid data. The endpo
   "timestamp": "2026-06-06T00:00:00.000Z",
   "lastSuccessfulUpdate": null,
   "responseTime": 120,
-  "error": "Upstream responded with HTTP 521"
+  "error": "launch-library-2 responded with HTTP 503; open-notify responded with HTTP 521"
 }
 ```
 
@@ -148,6 +161,17 @@ Health is not a data fallback endpoint. It reports the function runtime's view o
   "isFallback": false,
   "apis": [
     {
+      "name": "People in Space (launch-library-2)",
+      "url": "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100",
+      "status": "online",
+      "source": "launch-library-2",
+      "isFallback": false,
+      "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
+      "responseTime": 1190,
+      "lastChecked": "2026-06-06T00:00:00.000Z",
+      "error": null
+    },
+    {
       "name": "People in Space (open-notify)",
       "url": "https://api.open-notify.org/astros.json",
       "status": "offline",
@@ -160,7 +184,7 @@ Health is not a data fallback endpoint. It reports the function runtime's view o
     }
   ],
   "timestamp": "2026-06-06T00:00:00.000Z",
-  "lastSuccessfulUpdate": null,
+  "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
   "responseTime": 5000,
   "error": "People in Space (open-notify): HTTP 521"
 }
@@ -180,7 +204,13 @@ Client services must preserve reliability metadata from `/api/*` instead of redu
 
 The repo includes `npm run check:api-contract`, a static source-level check that prevents accidental removal of required contract tokens from endpoint, client, and docs files.
 
-This check does not call external APIs and is safe for CI because upstream health is intentionally unstable.
+The repo also includes `npm run check:space-people-sources`, a mocked source-chain check for these scenarios:
+
+- primary live OK
+- primary fail + secondary live OK
+- all live sources fail + explicit static fallback
+
+These checks do not call external APIs and are safe for CI because upstream health is intentionally unstable.
 
 ## Non-goals
 
@@ -193,4 +223,4 @@ This check does not call external APIs and is safe for CI because upstream healt
 
 ## Next recommended story
 
-Add a Cloudflare Pages Functions smoke harness with mocked upstream responses or local fixture URLs so `/api/space-people`, `/api/iss-location`, and `/api/health` can be validated as live/fallback contracts without depending on public API uptime.
+Add a Cloudflare Pages Functions local smoke harness that executes `/api/space-people`, `/api/iss-location`, and `/api/health` against mocked fixture URLs through the real Pages runtime instead of only source-level checks.
