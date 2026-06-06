@@ -23,9 +23,9 @@ The repository currently contains a Cloudflare-oriented runtime contract:
 - `next.config.mjs` uses `output: 'export'` and `trailingSlash: true`
 - `wrangler.toml` defines `pages_build_output_dir = "out"`
 - Cloudflare Pages Functions live under `functions/api/*`
-- The documented domain is `https://spacepeople.elelier.com`, but production DNS/hosting ownership still needs external confirmation
+- The documented and owner-confirmed production domain is `https://spacepeople.elelier.com`
 
-The app should be treated as a static export plus Cloudflare Pages Functions project until Cloudflare/GitHub Pages ownership is confirmed with deployment evidence.
+The app should be treated as a static export plus Cloudflare Pages Functions project.
 
 ## Runtime APIs
 
@@ -34,6 +34,8 @@ The UI consumes internal `/api/*` routes. Those endpoints are expected to be ser
 - `/api/space-people` proxies/falls back around Open Notify people-in-space data
 - `/api/iss-location` proxies/falls back around Where the ISS at? satellite data
 - `/api/health` checks external API health
+
+The response reliability contract for these endpoints is versioned in `docs/api-data-reliability-contract.md`. Runtime payloads should expose `source`, `isFallback`, `status`, `timestamp`, `lastSuccessfulUpdate`, `responseTime`, and `error` where applicable so fallback/simulated data is never ambiguous.
 
 If the project is deployed to a static-only host without functions, these `/api/*` routes will not work and the client will rely on fallbacks or fail depending on the path.
 
@@ -56,9 +58,10 @@ Do not add Supabase, Core DB, private API keys, or database dependencies unless 
 Preferred local validation sequence:
 
 ```bash
-npm install --legacy-peer-deps
+npm ci
 npm run lint
 npm run type-check
+npm run check:api-contract
 npm run build
 ```
 
@@ -78,16 +81,17 @@ Then verify:
 
 ## Known risks
 
-- README and older PR history have referenced GitHub Pages/static export; current repo files still include Cloudflare Pages Functions.
-- `spacepeople.elelier.com` appears in metadata and env examples, but production/hosting evidence should be confirmed externally.
 - Fallback astronaut data can become stale and should be treated as degraded-mode data, not authoritative truth.
+- `/api/health` can report upstream down/intermittent while a direct data endpoint succeeds later; treat this as a data-source reliability issue unless smoke proves a runtime outage.
+- Without persistence, `lastSuccessfulUpdate` is request-scoped and is not durable across requests.
 - The map depends on Leaflet browser-only behavior, so SSR/hydration changes should be tested carefully.
 - Do not modify map/charts runtime without a visual smoke test.
 
 ## Recommended next PR
 
-After this documentation contract, the next safe PR should add CI/readiness automation or a lightweight smoke checklist:
+After this reliability contract, the next safe PR should add a Cloudflare Pages Functions smoke harness using mocked upstream responses or local fixture URLs:
 
-1. Add/confirm GitHub Actions for `npm run lint`, `npm run type-check`, and `npm run build`.
-2. Add a deploy evidence doc confirming Cloudflare Pages project, domain, build command, output directory, and functions behavior.
-3. Only after that, address stale fallback data or UX/data freshness indicators.
+1. Exercise `/api/space-people` live and fallback shapes.
+2. Exercise `/api/iss-location` live and simulated fallback shapes.
+3. Exercise `/api/health` healthy/degraded/down shapes.
+4. Avoid brittle tests that depend on public upstream API uptime.
