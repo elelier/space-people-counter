@@ -39,7 +39,7 @@ const checks = [
   {
     path: "docs/api-data-reliability-contract.md",
     fields: ["/api/space-people", "/api/iss-location", "/api/health", "source", "isFallback"],
-    extra: ["launch-library-2", "No Supabase", "No Core DB", "source architecture"]
+    extra: ["launch-library-2", "No Supabase", "No Core DB", "Source architecture"]
   },
   {
     path: "docs/space-people-source-audit.md",
