@@ -1,6 +1,6 @@
 # API Data Reliability Contract
 
-This document defines the current reliability and fallback contract for Space People Counter `/api/*` endpoints.
+This document defines the reliability and fallback contract for Space People Counter `/api/*` endpoints.
 
 ## Scope
 
@@ -15,13 +15,7 @@ This document defines the current reliability and fallback contract for Space Pe
 
 ## Contract goal
 
-The product must not present fallback or simulated data as authoritative live data. Each endpoint must expose enough metadata for the UI, smoke checks, and future agents to distinguish:
-
-- live upstream data
-- fallback/static data
-- simulated ISS location data
-- upstream health degradation
-- client-side fallback after `/api/*` cannot be reached
+The product must not present fallback or simulated data as authoritative live data. Each endpoint must expose enough metadata for the UI, checks, and future agents to distinguish live upstream data from fallback, simulated, degraded, or client-side fallback states.
 
 ## Shared response fields
 
@@ -29,36 +23,57 @@ Every public `/api/*` response should include these fields when applicable:
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `status` | string | yes | Data status for the response. For data endpoints: `live` or `fallback`. For health: `healthy`, `degraded`, or `down`. |
+| `status` | string | yes | Data status for the response. Data endpoints use `live` or `fallback`; health uses `healthy`, `degraded`, or `down`. |
 | `source` | string | yes | Source identifier such as `launch-library-2`, `open-notify`, `wheretheiss`, `static-fallback`, `simulated-fallback`, or `cloudflare-pages-functions-health-check`. |
 | `isFallback` | boolean | yes | `true` only when the payload is fallback/simulated rather than verified live upstream data. |
-| `timestamp` | string or number | yes | Time the response was created. Data endpoint shape preserves existing timestamp compatibility. |
-| `lastSuccessfulUpdate` | string \| null | yes | Time of a successful upstream read within the current request. This is not durable across requests because no database/cache persistence is currently used. |
+| `timestamp` | string or number | yes | Time the response was created. |
+| `lastSuccessfulUpdate` | string or null | yes | Time of a successful upstream read within the current request. Not durable across requests. |
 | `responseTime` | number | yes | Milliseconds spent resolving the upstream check or data fetch path. |
-| `error` | string \| null | yes | Null when the response is healthy/live; otherwise the upstream/client error that triggered fallback or degraded health. |
+| `error` | string or null | yes | Null when the response is healthy/live; otherwise the upstream/client error that triggered fallback or degraded health. |
 
-Important limitation: without persistence, `lastSuccessfulUpdate` is request-scoped. A future Cloudflare KV/D1/Supabase spike may decide whether durable freshness history is worth adding.
+Important limitation: without persistence, `lastSuccessfulUpdate` is request-scoped.
 
 ## `/api/space-people`
 
-### Source order
+### Product data definition
 
-The endpoint now resolves people-in-space data through an explicit multi-source chain:
+`/api/space-people` means: humans currently in orbit aboard active space stations or active orbital missions.
+
+Suborbital flights are excluded because they require a different real-time event model and can change the broad population count only for minutes.
+
+### Source architecture
+
+The endpoint resolves people-in-space data through this explicit source architecture:
+
+1. source registry;
+2. per-source adapter/normalizer;
+3. payload validation;
+4. name-based dedupe;
+5. reliability metadata;
+6. static fallback only after every live source fails or returns invalid data.
+
+### Source order
 
 1. Primary live source: Launch Library 2 / The Space Devs astronauts endpoint with `in_space=true`, exposed as `source: "launch-library-2"`.
 2. Optional custom source: `SPACE_PEOPLE_API` or `NEXT_PUBLIC_SPACE_PEOPLE_API`, exposed as `source: "custom-space-people-api"`.
 3. Secondary live source: Open Notify `https://api.open-notify.org/astros.json`, exposed as `source: "open-notify"`.
-4. Last-resort static fallback: local stale list, exposed as `source: "static-fallback"` and `isFallback: true`.
+4. Last-resort static fallback: local stale snapshot, exposed as `source: "static-fallback"` and `isFallback: true`.
 
 Static fallback must only happen after every live source fails or returns invalid people data.
 
-### Live response
+### Data quality rules
 
-Expected when Launch Library 2, custom source, or Open Notify returns valid people data.
+- `people` must contain at least one valid `{ name, craft }` record.
+- People are deduped by normalized name.
+- Live payload `number` must equal the final deduped `people.length`.
+- If an upstream reports a mismatched count, that source is rejected and the endpoint tries the next source.
+- If a live source lacks craft/station metadata, `craft` is set to `Unknown spacecraft`; the endpoint must not invent a craft.
+
+### Live response
 
 ```json
 {
-  "number": 12,
+  "number": 10,
   "people": [{ "name": "Example", "craft": "ISS" }],
   "message": "success",
   "status": "live",
@@ -75,13 +90,13 @@ If Launch Library 2 fails but Open Notify succeeds, the same contract applies wi
 
 ### Fallback response
 
-Expected when Launch Library 2, custom source if configured, and Open Notify are down, time out, or return invalid data. The endpoint intentionally preserves the current fallback people list but marks it explicitly.
+Expected when Launch Library 2, custom source if configured, and Open Notify are down, time out, or return invalid data. The endpoint preserves a dated fallback snapshot but marks it explicitly.
 
 ```json
 {
-  "number": 12,
-  "people": [{ "name": "Oleg Kononenko", "craft": "ISS" }],
-  "message": "success (fallback)",
+  "number": 10,
+  "people": [{ "name": "Sergey Kud-Sverchkov", "craft": "ISS" }],
+  "message": "success (fallback; stale snapshot)",
   "status": "fallback",
   "source": "static-fallback",
   "isFallback": true,
@@ -94,103 +109,25 @@ Expected when Launch Library 2, custom source if configured, and Open Notify are
 
 UI rule: if `isFallback === true`, the counter can render but must keep a degraded/fallback message visible.
 
+See `docs/space-people-source-audit.md` for source decisions.
+
 ## `/api/iss-location`
 
-### Live response
+`/api/iss-location` remains scoped to ISS position. It should not be used as a crew or people-count source.
 
-Expected when Where the ISS at? returns valid latitude/longitude data.
+Live source: Where the ISS at? `https://api.wheretheiss.at/v1/satellites/25544`.
 
-```json
-{
-  "message": "success",
-  "timestamp": 1780752270343,
-  "status": "live",
-  "source": "wheretheiss",
-  "isFallback": false,
-  "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
-  "responseTime": 120,
-  "error": null,
-  "iss_position": {
-    "latitude": "45.462225536792",
-    "longitude": "-50.256584512092"
-  },
-  "altitude": 421.19,
-  "velocity": 27594.01,
-  "visibility": "daylight",
-  "footprint": 4513.54,
-  "units": "kilometers"
-}
-```
-
-### Simulated fallback response
-
-Expected when the ISS upstream is unavailable or returns invalid coordinates.
-
-```json
-{
-  "message": "success (simulated)",
-  "timestamp": 1780752270343,
-  "status": "fallback",
-  "source": "simulated-fallback",
-  "isFallback": true,
-  "lastSuccessfulUpdate": null,
-  "responseTime": 5000,
-  "error": "The operation was aborted",
-  "iss_position": {
-    "latitude": "19.4326",
-    "longitude": "-99.1332"
-  },
-  "altitude": 408,
-  "velocity": 27600,
-  "visibility": "daylight",
-  "footprint": 4500
-}
-```
-
-UI rule: if `isFallback === true`, technical details may say `Simulación` and `Precisión: Baja`; map rendering should remain stable.
+Fallback source: `simulated-fallback`, only when upstream is unavailable or returns invalid coordinates.
 
 ## `/api/health`
 
-Health is not a data fallback endpoint. It reports the function runtime's view of upstream availability.
+Health is not a data fallback endpoint. It reports the function runtime's view of upstream availability for APIs actually used by the app, including:
 
-```json
-{
-  "overall": "degraded",
-  "status": "degraded",
-  "source": "cloudflare-pages-functions-health-check",
-  "isFallback": false,
-  "apis": [
-    {
-      "name": "People in Space (launch-library-2)",
-      "url": "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100",
-      "status": "online",
-      "source": "launch-library-2",
-      "isFallback": false,
-      "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
-      "responseTime": 1190,
-      "lastChecked": "2026-06-06T00:00:00.000Z",
-      "error": null
-    },
-    {
-      "name": "People in Space (open-notify)",
-      "url": "https://api.open-notify.org/astros.json",
-      "status": "offline",
-      "source": "open-notify",
-      "isFallback": false,
-      "lastSuccessfulUpdate": null,
-      "responseTime": 1190,
-      "lastChecked": "2026-06-06T00:00:00.000Z",
-      "error": "HTTP 521"
-    }
-  ],
-  "timestamp": "2026-06-06T00:00:00.000Z",
-  "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
-  "responseTime": 5000,
-  "error": "People in Space (open-notify): HTTP 521"
-}
-```
+- `launch-library-2`
+- `open-notify`
+- `wheretheiss`
 
-`/api/health` may report `down` even if a direct endpoint succeeds moments later. Treat that as upstream intermittency unless production smoke proves a runtime outage.
+`/api/health` may report `down` even if a direct endpoint succeeds moments later. Treat that as upstream intermittency unless production evidence proves a runtime outage.
 
 ## Client contract
 
@@ -204,11 +141,13 @@ Client services must preserve reliability metadata from `/api/*` instead of redu
 
 The repo includes `npm run check:api-contract`, a static source-level check that prevents accidental removal of required contract tokens from endpoint, client, and docs files.
 
-The repo also includes `npm run check:space-people-sources`, a mocked source-chain check for these scenarios:
+The repo also includes `npm run check:space-people-sources`, a source-chain check for:
 
-- primary live OK
-- primary fail + secondary live OK
-- all live sources fail + explicit static fallback
+- source registry/adapters exist;
+- primary live OK;
+- primary fail plus secondary live OK;
+- all live sources fail plus explicit static fallback;
+- dedupe and count validation are preserved.
 
 These checks do not call external APIs and are safe for CI because upstream health is intentionally unstable.
 
@@ -223,4 +162,4 @@ These checks do not call external APIs and are safe for CI because upstream heal
 
 ## Next recommended story
 
-Add a Cloudflare Pages Functions local smoke harness that executes `/api/space-people`, `/api/iss-location`, and `/api/health` against mocked fixture URLs through the real Pages runtime instead of only source-level checks.
+Add a manual curated station crew fallback file with explicit `validFrom` and `validUntil` windows, or decide whether Cloudflare KV last-known-good cache is acceptable for this project.
