@@ -14,7 +14,7 @@ const checks = [
   {
     path: "functions/api/space-people.ts",
     fields: requiredEndpointFields,
-    extra: ["launch-library-2", "open-notify", "fallback"]
+    extra: ["launch-library-2", "open-notify", "fallback", "SourceAdapter", "validatePayload", "dedupePeople"]
   },
   {
     path: "functions/api/iss-location.ts",
@@ -39,7 +39,12 @@ const checks = [
   {
     path: "docs/api-data-reliability-contract.md",
     fields: ["/api/space-people", "/api/iss-location", "/api/health", "source", "isFallback"],
-    extra: ["launch-library-2", "No Supabase", "No Core DB"]
+    extra: ["launch-library-2", "No Supabase", "No Core DB", "Source architecture"]
+  },
+  {
+    path: "docs/space-people-source-audit.md",
+    fields: ["Launch Library 2", "Open Notify", "NASA public APIs", "Tiangong", "WhereTheISS", "Static fallback"],
+    extra: ["Humans currently in orbit", "should stay organized"]
   }
 ];
 
