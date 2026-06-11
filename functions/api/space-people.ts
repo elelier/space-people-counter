@@ -1,5 +1,10 @@
+type KVNamespaceLike = {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+};
+
 type PagesContext = {
-  env: Record<string, string | undefined>;
+  env: Record<string, string | undefined> & { SPACE_PEOPLE_KV?: KVNamespaceLike };
 };
 
 type AstronautData = {
@@ -24,6 +29,13 @@ type SpaceData = {
 
 type SpacePeoplePayload = Pick<SpaceData, "number" | "people" | "message">;
 
+type CachedSpacePeoplePayload = SpacePeoplePayload & {
+  originalSource: string;
+  lastSuccessfulUpdate: string;
+  savedAt: string;
+  cacheAgeMs: number;
+};
+
 type SourceCoverage = "orbital-people" | "iss-only-or-open-notify-compatible";
 
 type SourceDecision = "primary" | "secondary" | "custom";
@@ -42,7 +54,11 @@ const DEFAULT_OPEN_NOTIFY_API_URL = "https://api.open-notify.org/astros.json";
 const SOURCE_LAUNCH_LIBRARY = "launch-library-2";
 const SOURCE_OPEN_NOTIFY = "open-notify";
 const SOURCE_CUSTOM = "custom-space-people-api";
+const SOURCE_LAST_KNOWN_GOOD = "last-known-good-cache";
 const SOURCE_FALLBACK = "static-fallback";
+const LAST_KNOWN_GOOD_CACHE_KEY = "space-people:last-known-good";
+const LAST_KNOWN_GOOD_TTL_SECONDS = 24 * 60 * 60;
+const LAST_KNOWN_GOOD_TTL_MS = LAST_KNOWN_GOOD_TTL_SECONDS * 1000;
 const REQUEST_TIMEOUT_MS = 5000;
 
 // Static fallback snapshot from the 2026-06-06 source audit. It is intentionally marked as fallback/stale.
@@ -284,6 +300,123 @@ const getSpacePeopleSources = (env: PagesContext["env"]): SourceAdapter[] => {
   ]);
 };
 
+const getLastKnownGoodCache = (env: PagesContext["env"]): KVNamespaceLike | null => {
+  const cache = env.SPACE_PEOPLE_KV;
+  if (!cache) return null;
+  if (typeof cache.get !== "function" || typeof cache.put !== "function") return null;
+  return cache;
+};
+
+const isIsoTimestamp = (value: string): boolean => Number.isFinite(Date.parse(value));
+
+const parseLastKnownGoodCachePayload = (raw: string, now = Date.now()): CachedSpacePeoplePayload | null => {
+  const data = JSON.parse(raw) as {
+    number?: unknown;
+    people?: unknown;
+    message?: unknown;
+    source?: unknown;
+    timestamp?: unknown;
+    savedAt?: unknown;
+    lastSuccessfulUpdate?: unknown;
+  };
+
+  if (!data || typeof data !== "object") return null;
+
+  const originalSource = getStringValue(data.source);
+  const lastSuccessfulUpdate = getStringValue(data.lastSuccessfulUpdate) ?? getStringValue(data.timestamp);
+  const savedAt = getStringValue(data.savedAt);
+
+  if (!originalSource || !lastSuccessfulUpdate || !savedAt) return null;
+  if (!isIsoTimestamp(lastSuccessfulUpdate) || !isIsoTimestamp(savedAt)) return null;
+
+  const savedAtMs = Date.parse(savedAt);
+  const cacheAgeMs = now - savedAtMs;
+  if (!Number.isFinite(savedAtMs) || cacheAgeMs > LAST_KNOWN_GOOD_TTL_MS) return null;
+
+  const people = Array.isArray(data.people)
+    ? data.people
+        .filter((person: unknown) => person && typeof person === "object")
+        .map((person: unknown) => person as { name?: unknown; craft?: unknown })
+        .filter((person) => typeof person.name === "string" && typeof person.craft === "string")
+        .map((person) => ({ name: person.name as string, craft: person.craft as string }))
+    : [];
+
+  const number = typeof data.number === "number" ? data.number : people.length;
+  const message = typeof data.message === "string" ? data.message : "success";
+  const validated = validatePayload({ number, people, message }, SOURCE_LAST_KNOWN_GOOD);
+
+  if (!validated) return null;
+
+  return {
+    ...validated,
+    originalSource,
+    lastSuccessfulUpdate,
+    savedAt,
+    cacheAgeMs: Math.max(0, cacheAgeMs)
+  };
+};
+
+const saveLastKnownGoodCache = async (
+  env: PagesContext["env"],
+  data: SpacePeoplePayload & Pick<SpaceData, "source">,
+  timestamp: string
+): Promise<void> => {
+  const cache = getLastKnownGoodCache(env);
+  if (!cache) return;
+
+  const payload = {
+    number: data.number,
+    people: data.people,
+    message: data.message,
+    source: data.source,
+    timestamp,
+    savedAt: new Date().toISOString(),
+    lastSuccessfulUpdate: timestamp
+  };
+
+  try {
+    await cache.put(LAST_KNOWN_GOOD_CACHE_KEY, JSON.stringify(payload), {
+      expirationTtl: LAST_KNOWN_GOOD_TTL_SECONDS
+    });
+  } catch (error) {
+    console.error("Failed to save space people last-known-good cache:", error);
+  }
+};
+
+const readLastKnownGoodCache = async (
+  env: PagesContext["env"],
+  errors: string[]
+): Promise<CachedSpacePeoplePayload | null> => {
+  const cache = getLastKnownGoodCache(env);
+  if (!cache) {
+    errors.push("last-known-good cache unavailable: SPACE_PEOPLE_KV binding is not configured");
+    return null;
+  }
+
+  try {
+    const raw = await cache.get(LAST_KNOWN_GOOD_CACHE_KEY);
+    if (!raw) {
+      errors.push("last-known-good cache unavailable: no saved payload");
+      return null;
+    }
+
+    const cached = parseLastKnownGoodCachePayload(raw);
+    if (!cached) {
+      errors.push("last-known-good cache unavailable: payload missing, invalid, or older than 24h TTL");
+      return null;
+    }
+
+    return cached;
+  } catch (error) {
+    errors.push(`last-known-good cache read failed: ${getErrorMessage(error)}`);
+    return null;
+  }
+};
+
+const getUpstreamErrorMessage = (errors: string[]): string => {
+  return errors.filter((error) => !error.startsWith("last-known-good cache")).join("; ") || "All upstream sources failed";
+};
+
 export const onRequestGet = async ({ env }: PagesContext) => {
   const startedAt = Date.now();
   const errors: string[] = [];
@@ -292,6 +425,8 @@ export const onRequestGet = async ({ env }: PagesContext) => {
     try {
       const data = await fetchSpacePeopleSource(source);
       const timestamp = new Date().toISOString();
+
+      await saveLastKnownGoodCache(env, data, timestamp);
 
       return jsonResponse(
         withReliabilityMetadata(
@@ -319,7 +454,30 @@ export const onRequestGet = async ({ env }: PagesContext) => {
     }
   }
 
-  const errorMessage = errors.join("; ") || "All upstream sources failed";
+  const cached = await readLastKnownGoodCache(env, errors);
+  if (cached) {
+    return jsonResponse(
+      withReliabilityMetadata(
+        {
+          number: cached.number,
+          people: cached.people,
+          message: cached.message
+        },
+        {
+          status: "fallback",
+          source: SOURCE_LAST_KNOWN_GOOD,
+          isFallback: true,
+          timestamp: new Date().toISOString(),
+          lastSuccessfulUpdate: cached.lastSuccessfulUpdate,
+          responseTime: Date.now() - startedAt,
+          error: `${getUpstreamErrorMessage(errors)}; serving cached last-known-good data from ${cached.originalSource}; cacheAgeMs=${cached.cacheAgeMs}; static fallback not used`
+        }
+      ),
+      60
+    );
+  }
+
+  const errorMessage = errors.join("; ") || "All upstream sources and last-known-good cache failed";
 
   return jsonResponse(
     withReliabilityMetadata(
