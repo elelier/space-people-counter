@@ -1,3 +1,12 @@
+type KVNamespaceLike = {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+};
+
+type PagesContext = {
+  env: Record<string, string | undefined> & { SPACE_PEOPLE_KV?: KVNamespaceLike };
+};
+
 type ApiStatus = {
   name: string;
   url: string;
@@ -23,6 +32,8 @@ type HealthCheckResult = {
 };
 
 const SPACE_PEOPLE_PRIMARY_API = "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100";
+const LAST_KNOWN_GOOD_CACHE_KEY = "space-people:last-known-good";
+const SOURCE_LAST_KNOWN_GOOD = "last-known-good-cache";
 
 const jsonResponse = (data: unknown, cacheSeconds: number, status = 200) => {
   return new Response(JSON.stringify(data), {
@@ -91,16 +102,38 @@ const checkApiHealth = async (name: string, url: string, source: string, timeout
   }
 };
 
-export const onRequestGet = async () => {
+const checkLastKnownGoodBinding = (env: PagesContext["env"]): ApiStatus => {
+  const lastChecked = new Date().toISOString();
+  const hasBinding =
+    Boolean(env.SPACE_PEOPLE_KV) &&
+    typeof env.SPACE_PEOPLE_KV?.get === "function" &&
+    typeof env.SPACE_PEOPLE_KV?.put === "function";
+
+  return {
+    name: "People in Space cache (KV binding)",
+    url: `cloudflare-kv://SPACE_PEOPLE_KV/${LAST_KNOWN_GOOD_CACHE_KEY}`,
+    status: hasBinding ? "online" : "offline",
+    responseTime: 0,
+    lastChecked,
+    source: SOURCE_LAST_KNOWN_GOOD,
+    isFallback: false,
+    lastSuccessfulUpdate: hasBinding ? lastChecked : null,
+    error: hasBinding ? null : "Optional SPACE_PEOPLE_KV binding is not configured; dev/local health is still based on live APIs."
+  };
+};
+
+export const onRequestGet = async ({ env }: PagesContext) => {
   const startedAt = Date.now();
-  const checks = await Promise.all([
+  const upstreamChecks = await Promise.all([
     checkApiHealth("ISS Location (wheretheiss.at)", "https://api.wheretheiss.at/v1/satellites/25544", "wheretheiss"),
     checkApiHealth("People in Space (launch-library-2)", SPACE_PEOPLE_PRIMARY_API, "launch-library-2"),
     checkApiHealth("People in Space (open-notify)", "https://api.open-notify.org/astros.json", "open-notify")
   ]);
+  const cacheCheck = checkLastKnownGoodBinding(env);
+  const checks = [...upstreamChecks, cacheCheck];
 
-  const onlineCount = checks.filter((check) => check.status === "online").length;
-  const slowCount = checks.filter((check) => check.status === "slow").length;
+  const onlineCount = upstreamChecks.filter((check) => check.status === "online").length;
+  const slowCount = upstreamChecks.filter((check) => check.status === "slow").length;
 
   let overall: HealthCheckResult["overall"];
 
@@ -112,11 +145,11 @@ export const onRequestGet = async () => {
     overall = "down";
   }
 
-  const errors = checks
+  const errors = upstreamChecks
     .filter((check) => check.error)
     .map((check) => `${check.name}: ${check.error}`);
 
-  const successfulChecks = checks.filter((check) => check.lastSuccessfulUpdate);
+  const successfulChecks = upstreamChecks.filter((check) => check.lastSuccessfulUpdate);
   const result: HealthCheckResult = {
     overall,
     status: overall,

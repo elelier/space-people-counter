@@ -1,6 +1,7 @@
 # Space People Source Audit
 
 Date: 2026-06-06
+Updated: 2026-06-10 for optional last-known-good cache behavior.
 
 ## Product semantics
 
@@ -16,6 +17,7 @@ Suborbital flights are intentionally excluded because they can temporarily incre
 | --- | --- | --- |
 | Launch Library 2 / The Space Devs astronauts endpoint | Primary live source | Structured API, supports `in_space=true`, broad orbital-person coverage beyond ISS-only assumptions. |
 | Open Notify astros endpoint | Secondary live source | Simple and compatible with the legacy shape, but historically unstable and schema-light. |
+| Cloudflare KV `SPACE_PEOPLE_KV` | Optional last-known-good cache | Stores the last valid live payload for temporary upstream failures without creating a traditional database. |
 | NASA public APIs | Not used as primary | NASA has authoritative ISS content/news, but no simple official public endpoint found for all humans currently in orbit. |
 | WhereTheISS | Not used for people count | Good for ISS location only; not a crew/person source. |
 | Wikipedia/current-expedition pages | Audit/reference only | Useful for cross-checking semantics and fallback snapshot context, but not suitable as an automated primary runtime source. |
@@ -47,13 +49,14 @@ Implementation rules:
 - deduplicate by normalized name;
 - preserve craft/station if available;
 - use `Unknown spacecraft` only when the upstream has no craft/station metadata;
-- reject count mismatches instead of silently accepting inconsistent data.
+- reject count mismatches instead of silently accepting inconsistent data;
+- after a valid live response, attempt to save last-known-good data to Cloudflare KV if `SPACE_PEOPLE_KV` exists.
 
 Known risks:
 
 - public endpoint schema could drift;
 - craft/station metadata may be incomplete;
-- no durable cache exists, so freshness is request-scoped.
+- KV write failures must stay non-fatal and must not break a live response.
 
 ### Open Notify
 
@@ -76,7 +79,35 @@ Implementation rules:
 
 - accept only valid `people[].name` + `people[].craft` records;
 - deduplicate by normalized name;
-- reject `number !== people.length` instead of hiding mismatch.
+- reject `number !== people.length` instead of hiding mismatch;
+- after a valid live response, attempt to save last-known-good data to Cloudflare KV if `SPACE_PEOPLE_KV` exists.
+
+### Cloudflare KV last-known-good cache
+
+Decision: optional degraded fallback before static fallback.
+
+Binding and key:
+
+```text
+SPACE_PEOPLE_KV
+space-people:last-known-good
+```
+
+TTL rule: 24h logical TTL.
+
+Expected role:
+
+- if any live source succeeds, save the valid payload plus original source, live timestamp, `savedAt`, and `lastSuccessfulUpdate`;
+- if every live source fails, read this cache before static fallback;
+- if cache exists, is valid, and is <=24h old, return it with `status: "fallback"`, `source: "last-known-good-cache"`, and `isFallback: true`;
+- if missing, invalid, expired, or unavailable, continue to static fallback;
+- never mark cached data as `live`.
+
+Why this is acceptable:
+
+- Cloudflare KV is part of the existing Cloudflare Pages runtime boundary;
+- no Supabase, Core DB, SQL, service role, or traditional database is introduced;
+- dev/local remains functional with no KV binding.
 
 ### NASA public sources
 
@@ -108,7 +139,7 @@ It answers where the ISS is, not who is currently in space.
 
 ## Current fallback snapshot
 
-The static fallback list was refreshed in this PR as a dated stale snapshot from the audit context:
+The static fallback list was refreshed in PR #9 as a dated stale snapshot from the audit context:
 
 - ISS: Sergey Kud-Sverchkov, Sophie Adenot, Andrey Fedyaev, Jack Hathaway, Jessica Meir, Sergei Mikayev, Christopher Williams.
 - Tiangong: Zhu Yangzhu, Zhang Zhiyuan, Lai Ka-ying.
@@ -136,12 +167,13 @@ It must never be treated as live.
 4. validation;
 5. dedupe;
 6. reliability metadata;
-7. fallback only after every live source fails.
+7. optional last-known-good cache after every live source fails;
+8. static fallback only after live sources and cache fail.
 
 ## Future candidates
 
 Potential future improvement:
 
-- Cloudflare KV or scheduled build-time snapshot for last-known-good data, if the project accepts a persistence/cache dependency.
+- Production smoke/checklist after Cloudflare KV is configured manually.
 - Manual curated station crew file with explicit `validFrom` / `validUntil` windows, if no reliable Tiangong runtime API exists.
 - Add a separate definition toggle if the product ever wants to include suborbital flights.
