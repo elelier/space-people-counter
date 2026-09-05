@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   readiness:
-    name: Lint, type-check, contract, and build
+    name: Lint, type-check, contracts, and build
     runs-on: ubuntu-latest
 
     steps:
@@ -40,6 +40,15 @@ jobs:
 
       - name: API contract check
         run: npm run check:api-contract
+
+      - name: Space people source check
+        run: npm run check:space-people-sources
+
+      - name: Page experience contract check
+        run: npm run check:page-experience
+
+      - name: Diff check
+        run: git diff --check origin/main...HEAD
 
       - name: Build
         run: npm run build
