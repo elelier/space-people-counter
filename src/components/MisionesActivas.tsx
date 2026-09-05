@@ -1,141 +1,72 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { SpaceData } from "@/services/spaceApi";
-import { Info, Calendar, Flag } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MissionDetailsModal } from "./MissionDetailsModal";
-import { getMissionDetails, MissionDetailedData } from "@/services/missionData";
-import { AstronautImage } from "./AstronautImage";
-import Image from "next/image";
+import { Orbit, UserRound } from "lucide-react";
 
 interface MisionesActivasProps {
-  astronautas: SpaceData;
+  astronautas: SpaceData | null;
+  loading?: boolean;
 }
 
-export function MisionesActivas({ astronautas }: MisionesActivasProps) {
-  const [selectedMission, setSelectedMission] = useState<MissionDetailedData | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export function MisionesActivas({ astronautas, loading = false }: MisionesActivasProps) {
+  const peopleByCraft = (astronautas?.people ?? []).reduce<Record<string, string[]>>((groups, person) => {
+    const craft = person.craft || "Misión orbital";
+    groups[craft] = [...(groups[craft] ?? []), person.name];
+    return groups;
+  }, {});
 
-  // Optimize by memoizing the handler creator
-  const createDetailButtonHandler = useCallback((name: string) => {
-    return function handleButtonClick() {
-      const missionDetails = getMissionDetails(name);
-      if (missionDetails) {
-        setSelectedMission(missionDetails);
-        setIsModalOpen(true);
-      }
-    };
-  }, []);
-
-  // Handle closing the mission details modal
-  const handleCloseModal = (): void => {
-    setIsModalOpen(false);
-  };
+  const craftGroups = Object.entries(peopleByCraft).sort(([a], [b]) => a.localeCompare(b));
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <Card className="relative overflow-hidden bg-gradient-to-br from-blue-950 to-indigo-900 border-none shadow-xl card-hover">
-        <div className="absolute w-full h-full top-0 left-0">
-          <div className="stars"></div>
-          <div className="stars2"></div>
-        </div>
+    <section className="w-full max-w-5xl mx-auto" aria-labelledby="people-in-space-title">
+      <div className="mb-5 text-center sm:text-left">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">Tripulación actual</p>
+        <h2 id="people-in-space-title" className="mt-2 text-2xl sm:text-3xl font-bold text-white">
+          Quiénes están arriba
+        </h2>
+        <p className="mt-2 text-slate-300">
+          El listado usa exactamente los mismos datos que el contador de arriba.
+        </p>
+      </div>
 
-        <div className="relative z-10 p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Image
-              src="/images/icons/icons8-astronaut-100.png"
-              alt="Astronaut"
-              width={20}
-              height={20}
-              className="logo-hover floating-fast"
-            />
-            <span className="link-hover">Misiones Activas</span>
-          </h2>
-
-          {/* Grid responsive: 1 columna en móvil, 2 en tablet, 3 en desktop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {astronautas.people.map((person, idx) => {
-              const missionDetails = getMissionDetails(person.name);
-              // Create a handler for this specific astronaut
-              const handleDetailClick = createDetailButtonHandler(person.name);
-
-              return (
-                <div key={idx} className="group p-3 rounded-lg hover:bg-blue-900/20 transition-colors flex flex-col h-full card-hover">
-                  {/* Cabecera con foto e información básica */}
-                  <div className="flex items-start gap-3 mb-2">
-                    <AstronautImage
-                      name={person.name}
-                      className="w-12 h-12 flex-shrink-0 border-2 border-blue-500 astronaut-hover rounded-full"
-                    />
-                    <div className="text-left">
-                      <p className="text-white font-medium truncate max-w-[180px] sm:max-w-none link-hover">
-                        {person.name}
-                      </p>
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        <Badge variant="outline" className="text-blue-300 border-blue-500 text-xs badge-hover">
-                          {person.craft}
-                        </Badge>
-                        {missionDetails && (
-                          <Badge variant="outline" className="text-green-300 border-green-500 text-xs badge-hover">
-                            {missionDetails.role}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Información adicional */}
-                  {missionDetails && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-blue-300 mt-2 mb-3">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 icon-hover" />
-                        <span>{missionDetails.mission_duration}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Flag className="w-3 h-3 icon-hover" />
-                        <span>{missionDetails.nationality}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Barra de progreso */}
-                  <div className="mt-auto">
-                    <div className="flex items-center gap-2 w-full mb-2">
-                      <div className="text-xs text-blue-300 whitespace-nowrap">
-                        {missionDetails ? `${missionDetails.progress}%` : ''}
-                      </div>
-                      <Progress
-                        value={missionDetails?.progress || 50}
-                        className="w-full h-2 bg-blue-950 group-hover:bg-blue-900 transition-colors"
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs text-blue-300 hover:text-blue-100 hover:bg-blue-800/50 self-end w-full button-hover"
-                      onClick={handleDetailClick}
-                    >
-                      <Info className="w-3 h-3 mr-1 icon-hover" />
-                      Ver detalles
-                    </Button>
-                  </div>
+      {loading && !astronautas ? (
+        <Card className="border-blue-900/60 bg-blue-950/50 p-6 text-blue-200">
+          Consultando la tripulación actual…
+        </Card>
+      ) : craftGroups.length === 0 ? (
+        <Card className="border-blue-900/60 bg-blue-950/50 p-6 text-blue-200">
+          No hay un listado de tripulación disponible en este momento.
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {craftGroups.map(([craft, names]) => (
+            <Card key={craft} className="border-blue-900/70 bg-slate-950/70 p-5 sm:p-6 shadow-lg">
+              <div className="flex items-center justify-between gap-3 border-b border-blue-900/50 pb-4">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Orbit className="h-5 w-5 shrink-0 text-blue-400" aria-hidden="true" />
+                  <h3 className="truncate text-lg font-semibold text-white">{craft}</h3>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </Card>
+                <Badge variant="outline" className="border-blue-500/50 text-blue-200">
+                  {names.length} {names.length === 1 ? "persona" : "personas"}
+                </Badge>
+              </div>
 
-      {/* Modal de detalles de misión */}
-      <MissionDetailsModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        missionDetails={selectedMission}
-      />
-    </div>
+              <ul className="mt-4 space-y-3">
+                {names.map((name) => (
+                  <li key={`${craft}-${name}`} className="flex items-center gap-3 text-slate-100">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-300">
+                      <UserRound className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span>{name}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
