@@ -80,9 +80,9 @@ function normalizeSpaceData(data: any): SpaceData | null {
   };
 }
 
-export async function getPeopleInSpace(): Promise<SpaceData> {
+export async function getPeopleInSpace(forceRefresh = false): Promise<SpaceData> {
   const now = Date.now();
-  if (cachedData && now - cacheTimestamp < CACHE_TTL_MS) {
+  if (!forceRefresh && cachedData && now - cacheTimestamp < CACHE_TTL_MS) {
     return cachedData;
   }
 
