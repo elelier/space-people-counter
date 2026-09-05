@@ -1,9 +1,13 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const failures = [];
 
 function read(path) {
+  if (!existsSync(path)) {
+    failures.push(`${path} does not exist`);
+    return "";
+  }
   return readFileSync(path, "utf8");
 }
 
@@ -18,6 +22,7 @@ function forbidToken(path, token) {
 }
 
 function collectFiles(dir) {
+  if (!existsSync(dir)) return [];
   return readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
     return statSync(path).isDirectory() ? collectFiles(path) : [path];
