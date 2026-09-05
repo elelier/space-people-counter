@@ -1,34 +1,11 @@
-import { PersonasEnEspacio } from "@/components/PersonasEnEspacio";
-import { MisionesActivas } from "@/components/MisionesActivas";
+import { SpacePeopleExperience } from "@/components/SpacePeopleExperience";
 import { ISSMap } from "@/components/ISSMap";
-import { SpaceStationsInfo } from "@/components/SpaceStationsInfo";
 import { SimpleNavbar } from "@/components/SimpleNavbar";
 import { SimpleHistoricalData } from "@/components/SimpleHistoricalData";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { StructuredData } from "@/components/StructuredData";
-import { SpaceData } from "@/services/spaceApi";
-// Removed KofiButton import
-
-
-// Datos iniciales para hidratar el componente
-const initialData: SpaceData = {
-  message: "success",
-  number: 12,
-  people: [
-    { craft: "ISS", name: "Oleg Kononenko" },
-    { craft: "ISS", name: "Nikolai Chub" },
-    { craft: "ISS", name: "Tracy Caldwell Dyson" },
-    { craft: "ISS", name: "Matthew Dominick" },
-    { craft: "ISS", name: "Michael Barratt" },
-    { craft: "ISS", name: "Jeanette Epps" },
-    { craft: "ISS", name: "Alexander Grebenkin" },
-    { craft: "ISS", name: "Butch Wilmore" },
-    { craft: "ISS", name: "Sunita Williams" },
-    { craft: "Tiangong", name: "Li Guangsu" },
-    { craft: "Tiangong", name: "Li Cong" },
-    { craft: "Tiangong", name: "Ye Guangfu" }
-  ]
-};
+import { Card } from "@/components/ui/card";
+import { Database, RefreshCcw, ShieldCheck } from "lucide-react";
 
 export default function Home() {
   return (
@@ -36,62 +13,120 @@ export default function Home() {
       <GoogleAnalytics />
       <StructuredData />
       <SimpleNavbar />
-      <div className="pt-24 pb-20 container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-8 sm:gap-12">
-        {/* Elemento invisible para el enlace "Inicio" con el id "top" */}
-        <div id="top" className="scroll-mt-20"></div>
 
-        {/* Contador de personas en el espacio */}
-        <PersonasEnEspacio initialData={initialData} />
+      <div className="container mx-auto flex flex-col gap-12 px-4 pb-20 pt-24 sm:px-6 sm:gap-16 lg:px-8">
+        <div id="top" className="scroll-mt-24" />
 
-        {/* Sección de Misiones Activas con el ID para navegación */}
-        <div id="misiones" className="scroll-mt-20">
-          <MisionesActivas astronautas={initialData} />
-        </div>
+        <SpacePeopleExperience />
 
-        {/* Mapa de la ISS */}
-        <div id="estaciones" className="scroll-mt-20">
+        <section id="estaciones" className="scroll-mt-24" aria-labelledby="iss-title">
+          <div className="mx-auto mb-5 w-full max-w-5xl text-center sm:text-left">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">En órbita</p>
+            <h2 id="iss-title" className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+              ¿Dónde está la ISS ahora?
+            </h2>
+          </div>
           <ISSMap />
-        </div>
+        </section>
 
-        {/* Información adicional */}
-        <div id="info" className="scroll-mt-20">
-          <SpaceStationsInfo />
-        </div>
+        <section id="info" className="scroll-mt-24" aria-labelledby="how-we-know-title">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="mb-6 text-center sm:text-left">
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">Transparencia</p>
+              <h2 id="how-we-know-title" className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                Cómo sabemos este número
+              </h2>
+              <p className="mt-2 max-w-3xl text-slate-300">
+                La página consulta fuentes públicas de datos espaciales y deja visible cuando tiene que usar información de respaldo.
+              </p>
+            </div>
 
-        {/* Historial de astronautas en el espacio */}
-        <div id="historial" className="scroll-mt-20">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="border-blue-900/70 bg-slate-950/70 p-5">
+                <Database className="h-5 w-5 text-blue-400" aria-hidden="true" />
+                <h3 className="mt-4 font-semibold text-white">Fuentes públicas</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Consultamos fuentes abiertas de datos espaciales para conocer las personas en misiones orbitales activas.
+                </p>
+              </Card>
+              <Card className="border-blue-900/70 bg-slate-950/70 p-5">
+                <ShieldCheck className="h-5 w-5 text-blue-400" aria-hidden="true" />
+                <h3 className="mt-4 font-semibold text-white">Normalización y verificación</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Los registros se normalizan, validan y deduplican antes de construir el conteo que ves arriba.
+                </p>
+              </Card>
+              <Card className="border-blue-900/70 bg-slate-950/70 p-5">
+                <RefreshCcw className="h-5 w-5 text-blue-400" aria-hidden="true" />
+                <h3 className="mt-4 font-semibold text-white">Fallback visible</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Si las fuentes en vivo fallan, mostramos un respaldo y lo marcamos explícitamente para no hacerlo pasar por dato live.
+                </p>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        <section id="faq" className="scroll-mt-24" aria-labelledby="faq-title">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="mb-6 text-center sm:text-left">
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">Preguntas frecuentes</p>
+              <h2 id="faq-title" className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                Lo esencial sobre el conteo
+              </h2>
+            </div>
+
+            <div className="divide-y divide-blue-900/60 rounded-2xl border border-blue-900/70 bg-slate-950/60 px-5 sm:px-7">
+              <article className="py-5">
+                <h3 className="font-semibold text-white">¿Qué cuenta como una persona “en el espacio”?</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Actualmente contamos personas en órbita terrestre en estaciones o misiones orbitales activas. Los vuelos suborbitales quedan fuera del conteo.
+                </p>
+              </article>
+              <article className="py-5">
+                <h3 className="font-semibold text-white">¿Cada cuánto se actualiza?</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  La app consulta periódicamente sus fuentes y actualiza el conteo cuando hay datos nuevos. También puedes pedir una actualización manual desde el contador.
+                </p>
+              </article>
+              <article className="py-5">
+                <h3 className="font-semibold text-white">¿Por qué puede cambiar el número?</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Principalmente por lanzamientos, retornos de tripulaciones y cambios de misión.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <div id="historial" className="scroll-mt-24">
           <SimpleHistoricalData />
         </div>
       </div>
 
-      {/* Footer con atribución actualizada */}
-      <div className="py-8 border-t border-opacity-20 border-blue-400 bg-black/30 backdrop-blur-sm">
+      <footer className="border-t border-blue-900/40 bg-black/30 py-8 backdrop-blur-sm">
         <div className="container mx-auto px-4 text-center">
-          <p key="footer-credit" className="text-gray-300 text-sm">
-            © 2025 Space People Counter | Desarrollado por <a href="https://www.elelier.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline transition-colors">elelier</a> con ❤️ para explorar el espacio
-          </p>
-          <div className="flex justify-center mt-4">
-            {/* Direct Ko-fi button without component */}
+          <p className="text-sm text-gray-300">
+            © 2026 Space People Counter · Desarrollado por{" "}
             <a
-              href="https://ko-fi.com/spacepeoplecounter"
+              href="https://www.elelier.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-[#2F2C7D] text-white py-3 px-6 rounded-md transition-all duration-300 hover:bg-[#413B9F] hover:-translate-y-1 hover:shadow-lg"
+              className="text-blue-400 underline transition-colors hover:text-blue-300"
             >
-              <div className="relative w-5 h-5">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                  <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-                  <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-                  <line x1="6" y1="1" x2="6" y2="4" />
-                  <line x1="10" y1="1" x2="10" y2="4" />
-                  <line x1="14" y1="1" x2="14" y2="4" />
-                </svg>
-              </div>
-              <span className="font-medium">Combustible para la Misión</span>
+              elelier
             </a>
-          </div>
+          </p>
+          <a
+            href="https://ko-fi.com/spacepeoplecounter"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center justify-center rounded-md border border-blue-500/40 px-4 py-2 text-sm font-medium text-blue-100 transition-colors hover:bg-blue-900/40"
+          >
+            Apoya Space People
+          </a>
         </div>
-      </div>
+      </footer>
     </main>
   );
 }
