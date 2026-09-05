@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "check:api-contract": "node scripts/check-api-contract.mjs",
     "check:space-people-sources": "node scripts/check-space-people-source-chain.mjs",
+    "check:page-experience": "node scripts/check-page-experience.mjs",
     "build:analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
