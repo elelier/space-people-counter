@@ -13,62 +13,60 @@ const mono = Roboto_Mono({
   subsets: ["latin"],
 });
 
-// Viewport configuration (separado del metadata en Next.js 15)
 export const viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
 };
 
+const title = "¿Cuántas personas hay en el espacio ahora? | Space People";
+const description =
+  "Consulta cuántas personas hay en el espacio ahora, quiénes están en órbita y dónde está la ISS. Datos públicos con estado en vivo o de respaldo claramente visible.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://spacepeople.elelier.com'),
-  title: "Space People Counter - ¿Cuántas personas hay en el espacio ahora?",
-  description: "¿Alguna vez te has preguntado cuántas personas hay en el espacio ahora? Visita Space People! ubicación de la ISS y datos de misiones espaciales activas",
-  keywords: ["espacio", "astronautas", "ISS", "estación espacial", "tiempo real", "NASA"],
+  metadataBase: new URL("https://spacepeople.elelier.com"),
+  title,
+  description,
+  alternates: {
+    canonical: "/",
+  },
   authors: [{ name: "elelier", url: "https://www.elelier.com" }],
   creator: "elelier",
   publisher: "elelier",
-  
-  // Configuración del favicon y iconos
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.png', type: 'image/png', sizes: '100x100' },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png", sizes: "100x100" },
     ],
-    apple: [
-      { url: '/favicon.png', sizes: '100x100', type: 'image/png' },
-    ],
-    shortcut: '/favicon.ico',
+    apple: [{ url: "/favicon.png", sizes: "100x100", type: "image/png" }],
+    shortcut: "/favicon.ico",
   },
-  
-  // Open Graph para redes sociales
   openGraph: {
-    title: "Space People Counter",
-    description: "Contador en tiempo real de personas en el espacio exterior",
-    url: "https://spacepeople.elelier.com",
-    siteName: "Space People Counter",
+    title,
+    description,
+    url: "/",
+    siteName: "Space People",
     images: [
       {
-        url: "/favicon.png",
-        width: 100,
-        height: 100,
-        alt: "Space People Counter Logo",
+        url: "/og-space-people.png",
+        width: 1200,
+        height: 630,
+        alt: "Space People: descubre cuántas personas están ahora mismo en el espacio",
       },
     ],
-    locale: "es_ES",
+    locale: "es_MX",
     type: "website",
   },
-  
-  // Twitter Card
   twitter: {
-    card: "summary",
-    title: "Space People Counter",
-    description: "Contador en tiempo real de personas en el espacio exterior",
-    images: ["/favicon.png"],
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/og-space-people.png"],
   },
-  
-  // Configuración adicional
   manifest: "/manifest.json",
-  robots: "index, follow",
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -77,11 +75,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${mono.variable}`}>
+    <html lang="es-MX" className={`${inter.variable} ${mono.variable}`}>
       <body className="antialiased" suppressHydrationWarning>
-        <ThemeWrapper>
-          {children}
-        </ThemeWrapper>
+        <ThemeWrapper>{children}</ThemeWrapper>
       </body>
     </html>
   );
