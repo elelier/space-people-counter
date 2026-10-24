@@ -1,5 +1,11 @@
 type PagesContext = {
   env: Record<string, string | undefined>;
+  request?: Request;
+};
+
+type EdgeCache = {
+  match: (request: Request) => Promise<Response | undefined>;
+  put: (request: Request, response: Response) => Promise<void>;
 };
 
 type AstronautData = {
@@ -44,6 +50,59 @@ const SOURCE_OPEN_NOTIFY = "open-notify";
 const SOURCE_CUSTOM = "custom-space-people-api";
 const SOURCE_FALLBACK = "static-fallback";
 const REQUEST_TIMEOUT_MS = 5000;
+// A shared per-data-center budget protects the 15/hour unauthenticated upstream limit.
+// Unlike a browser cache, this also covers different visitors to the same Pages Function.
+const LIVE_EDGE_TTL_SECONDS = 30 * 60;
+const FALLBACK_EDGE_TTL_SECONDS = 15 * 60;
+
+const getEdgeCache = (): EdgeCache | null => {
+  const storage = (globalThis as unknown as { caches?: { default?: EdgeCache } }).caches;
+  return storage?.default ?? null;
+};
+
+const getEdgeCacheKey = (request?: Request): Request | null => {
+  if (!request) return null;
+  const url = new URL(request.url);
+  url.pathname = "/api/space-people";
+  url.search = "";
+  url.hash = "";
+  return new Request(url.toString());
+};
+
+const readEdgeCache = async (cache: EdgeCache | null, key: Request | null): Promise<Response | null> => {
+  if (!cache || !key) return null;
+
+  try {
+    const cached = await cache.match(key);
+    if (!cached) return null;
+
+    // Keep the client-facing five-minute contract; the edge has its own longer TTL.
+    const headers = new Headers(cached.headers);
+    headers.set("cache-control", "public, max-age=300");
+    return new Response(cached.body, { status: cached.status, headers });
+  } catch (error) {
+    console.error("Space people edge cache read failed:", error);
+    return null;
+  }
+};
+
+const writeEdgeCache = async (
+  cache: EdgeCache | null,
+  key: Request | null,
+  response: Response,
+  ttlSeconds: number
+): Promise<void> => {
+  if (!cache || !key) return;
+
+  try {
+    const copy = response.clone();
+    const headers = new Headers(copy.headers);
+    headers.set("cache-control", `public, max-age=${ttlSeconds}`);
+    await cache.put(key, new Response(copy.body, { status: copy.status, headers }));
+  } catch (error) {
+    console.error("Space people edge cache write failed:", error);
+  }
+};
 
 // Static fallback snapshot from the 2026-06-06 source audit. It is intentionally marked as fallback/stale.
 // Product semantics: humans currently in orbit aboard active stations or orbital missions; suborbital flights excluded.
@@ -284,7 +343,12 @@ const getSpacePeopleSources = (env: PagesContext["env"]): SourceAdapter[] => {
   ]);
 };
 
-export const onRequestGet = async ({ env }: PagesContext) => {
+export const onRequestGet = async ({ env, request }: PagesContext) => {
+  const edgeCache = getEdgeCache();
+  const edgeKey = getEdgeCacheKey(request);
+  const cached = await readEdgeCache(edgeCache, edgeKey);
+  if (cached) return cached;
+
   const startedAt = Date.now();
   const errors: string[] = [];
 
@@ -293,7 +357,7 @@ export const onRequestGet = async ({ env }: PagesContext) => {
       const data = await fetchSpacePeopleSource(source);
       const timestamp = new Date().toISOString();
 
-      return jsonResponse(
+      const response = jsonResponse(
         withReliabilityMetadata(
           {
             number: data.number,
@@ -312,6 +376,8 @@ export const onRequestGet = async ({ env }: PagesContext) => {
         ),
         300
       );
+      await writeEdgeCache(edgeCache, edgeKey, response, LIVE_EDGE_TTL_SECONDS);
+      return response;
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       errors.push(errorMessage);
@@ -321,7 +387,7 @@ export const onRequestGet = async ({ env }: PagesContext) => {
 
   const errorMessage = errors.join("; ") || "All upstream sources failed";
 
-  return jsonResponse(
+  const response = jsonResponse(
     withReliabilityMetadata(
       {
         number: fallbackPeople.length,
@@ -340,4 +406,6 @@ export const onRequestGet = async ({ env }: PagesContext) => {
     ),
     300
   );
+  await writeEdgeCache(edgeCache, edgeKey, response, FALLBACK_EDGE_TTL_SECONDS);
+  return response;
 };
