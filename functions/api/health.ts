@@ -23,6 +23,17 @@ type HealthCheckResult = {
 };
 
 const SPACE_PEOPLE_PRIMARY_API = "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100";
+const HEALTH_EDGE_TTL_SECONDS = 30 * 60;
+
+type HealthCache = {
+  match: (request: Request) => Promise<Response | undefined>;
+  put: (request: Request, response: Response) => Promise<void>;
+};
+
+const getHealthCache = (): HealthCache | null => {
+  const storage = (globalThis as unknown as { caches?: { default?: HealthCache } }).caches;
+  return storage?.default ?? null;
+};
 
 const jsonResponse = (data: unknown, cacheSeconds: number, status = 200) => {
   return new Response(JSON.stringify(data), {
@@ -91,7 +102,23 @@ const checkApiHealth = async (name: string, url: string, source: string, timeout
   }
 };
 
-export const onRequestGet = async () => {
+export const onRequestGet = async ({ request }: { request?: Request } = {}) => {
+  const cache = getHealthCache();
+  const cacheKey = request ? new Request(new URL("/api/health", request.url).toString()) : null;
+
+  if (cache && cacheKey) {
+    try {
+      const cached = await cache.match(cacheKey);
+      if (cached) {
+        const headers = new Headers(cached.headers);
+        headers.set("cache-control", "public, max-age=60");
+        return new Response(cached.body, { status: cached.status, headers });
+      }
+    } catch (error) {
+      console.error("API health edge cache read failed:", error);
+    }
+  }
+
   const startedAt = Date.now();
   const checks = await Promise.all([
     checkApiHealth("ISS Location (wheretheiss.at)", "https://api.wheretheiss.at/v1/satellites/25544", "wheretheiss"),
@@ -129,5 +156,17 @@ export const onRequestGet = async () => {
     error: errors.length > 0 ? errors.join("; ") : null
   };
 
-  return jsonResponse(result, 60);
+  const response = jsonResponse(result, 60);
+  if (cache && cacheKey) {
+    try {
+      const copy = response.clone();
+      const headers = new Headers(copy.headers);
+      headers.set("cache-control", `public, max-age=${HEALTH_EDGE_TTL_SECONDS}`);
+      await cache.put(cacheKey, new Response(copy.body, { status: copy.status, headers }));
+    } catch (error) {
+      console.error("API health edge cache write failed:", error);
+    }
+  }
+
+  return response;
 };
