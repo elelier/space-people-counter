@@ -56,6 +56,10 @@ export function MisionesActivas({ astronautas }: MisionesActivasProps) {
             <span className="link-hover">Misiones Activas</span>
           </h2>
 
+          {astronautas.message === "loading" && (
+            <p className="text-sm text-blue-200 mb-4" role="status">Consultando tripulación actual...</p>
+          )}
+
           {/* Grid responsive: 1 columna en móvil, 2 en tablet, 3 en desktop */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {astronautas.people.map((person, idx) => {
