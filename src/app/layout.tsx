@@ -22,7 +22,8 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://spacepeople.elelier.com'),
   title: "Space People Counter - ¿Cuántas personas hay en el espacio ahora?",
-  description: "¿Alguna vez te has preguntado cuántas personas hay en el espacio ahora? Visita Space People! ubicación de la ISS y datos de misiones espaciales activas",
+  description: "¿Cuántas personas hay en el espacio ahora? Consulta el contador de astronautas, sus misiones y la ubicación de la ISS.",
+  alternates: { canonical: '/' },
   keywords: ["espacio", "astronautas", "ISS", "estación espacial", "tiempo real", "NASA"],
   authors: [{ name: "elelier", url: "https://www.elelier.com" }],
   creator: "elelier",
@@ -42,28 +43,28 @@ export const metadata: Metadata = {
   
   // Open Graph para redes sociales
   openGraph: {
-    title: "Space People Counter",
-    description: "Contador en tiempo real de personas en el espacio exterior",
-    url: "https://spacepeople.elelier.com",
+    title: "¿Cuántas personas hay en el espacio ahora? | Space People Counter",
+    description: "Descubre cuántas personas están en el espacio y quiénes son. Consulta el contador actualizado.",
+    url: "https://spacepeople.elelier.com/",
     siteName: "Space People Counter",
     images: [
       {
-        url: "/favicon.png",
-        width: 100,
-        height: 100,
-        alt: "Space People Counter Logo",
+        url: "/social-space-people.png",
+        width: 1734,
+        height: 907,
+        alt: "La Tierra vista desde el espacio, un astronauta y la pregunta: ¿Cuántas personas hay en el espacio ahora?",
       },
     ],
-    locale: "es_ES",
+    locale: "es_MX",
     type: "website",
   },
   
   // Twitter Card
   twitter: {
-    card: "summary",
-    title: "Space People Counter",
-    description: "Contador en tiempo real de personas en el espacio exterior",
-    images: ["/favicon.png"],
+    card: "summary_large_image",
+    title: "¿Cuántas personas hay en el espacio ahora?",
+    description: "Descubre el contador actualizado de astronautas y sus misiones.",
+    images: ["/social-space-people.png"],
   },
   
   // Configuración adicional

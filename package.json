@@ -12,6 +12,7 @@
     "check:space-people-sources": "node scripts/check-space-people-source-chain.mjs",
     "test:space-people-runtime": "node scripts/test-space-people-runtime.mjs",
     "test:counter-delta": "node scripts/test-counter-delta.mjs",
+    "test:share": "node --test scripts/test-share-page.mjs",
     "build:analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
