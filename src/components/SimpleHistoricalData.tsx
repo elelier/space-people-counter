@@ -44,15 +44,7 @@ export function SimpleHistoricalData() {
           </div>
 
           {/* Estadísticas principales */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-900/30 backdrop-blur-sm rounded-lg p-4 border border-blue-800/30 card-hover">
-              <div className="text-xs text-blue-300 mb-1">Personas en el espacio actualmente</div>
-              <div className="flex items-baseline">
-                <span className="text-white text-2xl font-bold logo-hover">12</span>
-                <span className="text-green-400 text-sm ml-2">Récord histórico</span>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="bg-blue-900/30 backdrop-blur-sm rounded-lg p-4 border border-blue-800/30 card-hover">
               <div className="text-xs text-blue-300 mb-1">Personas que han viajado al espacio</div>
               <div className="flex items-baseline">

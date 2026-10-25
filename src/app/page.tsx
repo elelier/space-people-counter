@@ -1,5 +1,4 @@
-import { PersonasEnEspacio } from "@/components/PersonasEnEspacio";
-import { MisionesActivas } from "@/components/MisionesActivas";
+import { SpacePeopleSections } from "@/components/SpacePeopleSections";
 import { ISSMap } from "@/components/ISSMap";
 import { SpaceStationsInfo } from "@/components/SpaceStationsInfo";
 import { SimpleNavbar } from "@/components/SimpleNavbar";
@@ -10,24 +9,11 @@ import { SpaceData } from "@/services/spaceApi";
 // Removed KofiButton import
 
 
-// Datos iniciales para hidratar el componente
+// Solo estado de carga para SSR/hidratación. Nunca publicar un roster inventado.
 const initialData: SpaceData = {
-  message: "success",
-  number: 12,
-  people: [
-    { craft: "ISS", name: "Oleg Kononenko" },
-    { craft: "ISS", name: "Nikolai Chub" },
-    { craft: "ISS", name: "Tracy Caldwell Dyson" },
-    { craft: "ISS", name: "Matthew Dominick" },
-    { craft: "ISS", name: "Michael Barratt" },
-    { craft: "ISS", name: "Jeanette Epps" },
-    { craft: "ISS", name: "Alexander Grebenkin" },
-    { craft: "ISS", name: "Butch Wilmore" },
-    { craft: "ISS", name: "Sunita Williams" },
-    { craft: "Tiangong", name: "Li Guangsu" },
-    { craft: "Tiangong", name: "Li Cong" },
-    { craft: "Tiangong", name: "Ye Guangfu" }
-  ]
+  message: "loading",
+  number: 0,
+  people: []
 };
 
 export default function Home() {
@@ -40,13 +26,8 @@ export default function Home() {
         {/* Elemento invisible para el enlace "Inicio" con el id "top" */}
         <div id="top" className="scroll-mt-20"></div>
 
-        {/* Contador de personas en el espacio */}
-        <PersonasEnEspacio initialData={initialData} />
-
-        {/* Sección de Misiones Activas con el ID para navegación */}
-        <div id="misiones" className="scroll-mt-20">
-          <MisionesActivas astronautas={initialData} />
-        </div>
+        {/* Contador y tripulación comparten la misma consulta real. */}
+        <SpacePeopleSections initialData={initialData} />
 
         {/* Mapa de la ISS */}
         <div id="estaciones" className="scroll-mt-20">

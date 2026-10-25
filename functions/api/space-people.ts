@@ -43,8 +43,11 @@ type SourceAdapter = {
   normalize: (data: unknown) => SpacePeoplePayload | null;
 };
 
+const DEFAULT_COMMUNITY_API_URL = "https://corquaid.github.io/international-space-station-APIs/JSON/people-in-space.json";
+// Keep the historical environment override for the Launch Library 2 secondary source.
 const DEFAULT_PRIMARY_API_URL = "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100";
 const DEFAULT_OPEN_NOTIFY_API_URL = "https://api.open-notify.org/astros.json";
+const SOURCE_COMMUNITY_ROSTER = "community-roster";
 const SOURCE_LAUNCH_LIBRARY = "launch-library-2";
 const SOURCE_OPEN_NOTIFY = "open-notify";
 const SOURCE_CUSTOM = "custom-space-people-api";
@@ -230,6 +233,33 @@ const normalizeOpenNotifyData = (data: unknown): SpacePeoplePayload | null => {
   return validatePayload({ number, people, message }, SOURCE_OPEN_NOTIFY);
 };
 
+// GitHub Pages JSON is maintained around crew rotations; `iss` is only an ISS
+// membership flag, so non-ISS orbital missions must not all become Tiangong.
+const normalizeCommunityRosterData = (data: unknown): SpacePeoplePayload | null => {
+  if (!data || typeof data !== "object") return null;
+
+  const record = data as { number?: unknown; people?: unknown };
+  if (!Number.isSafeInteger(record.number) || (record.number as number) <= 0 || !Array.isArray(record.people)) {
+    return null;
+  }
+
+  const people: AstronautData[] = [];
+  for (const person of record.people) {
+    if (!person || typeof person !== "object") return null;
+
+    const entry = person as { name?: unknown; iss?: unknown; spacecraft?: unknown };
+    const name = getStringValue(entry.name);
+    const spacecraft = getStringValue(entry.spacecraft);
+    if (!name || typeof entry.iss !== "boolean" || !spacecraft) return null;
+
+    const isTiangongFlight = /^(shenzhou|tiangong)\b/i.test(spacecraft);
+    const craft = entry.iss ? "ISS" : isTiangongFlight ? "Tiangong" : spacecraft;
+    people.push({ name, craft });
+  }
+
+  return validatePayload({ number: record.number as number, people, message: "success" }, SOURCE_COMMUNITY_ROSTER);
+};
+
 const normalizeLaunchLibraryData = (data: unknown): SpacePeoplePayload | null => {
   if (!data || typeof data !== "object") return null;
 
@@ -313,11 +343,19 @@ const getSpacePeopleSources = (env: PagesContext["env"]): SourceAdapter[] => {
 
   return uniqueSources([
     {
+      source: SOURCE_COMMUNITY_ROSTER,
+      label: "Community-maintained ISS and Tiangong crew roster (corquaid)",
+      url: DEFAULT_COMMUNITY_API_URL,
+      coverage: "orbital-people",
+      decision: "primary",
+      normalize: normalizeCommunityRosterData
+    },
+    {
       source: SOURCE_LAUNCH_LIBRARY,
       label: "The Space Devs / Launch Library 2",
       url: env.SPACE_PEOPLE_PRIMARY_API ?? DEFAULT_PRIMARY_API_URL,
       coverage: "orbital-people",
-      decision: "primary",
+      decision: "secondary",
       normalize: normalizeLaunchLibraryData
     },
     ...(customUrl

@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getPeopleInSpace, SpaceData } from "@/services/spaceApi";
-import { RefreshCcw, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { getRosterDelta } from "@/services/counterDelta";
+import { RefreshCcw, Users } from "lucide-react";
 import { UpdateCountdown } from "./UpdateCountdown";
 import { Alert, AlertType } from "@/components/ui/alert";
 
@@ -14,6 +15,7 @@ const AUTO_UPDATE_INTERVAL = 5 * 60 * 1000;
 
 interface PersonasEnEspacioProps {
   initialData: SpaceData;
+  onDataChange?: (updated: SpaceData) => void;
 }
 
 interface AlertInfo {
@@ -28,12 +30,11 @@ interface AstronautData {
   craft: string;
 }
 
-export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
+export function PersonasEnEspacio({ initialData, onDataChange }: PersonasEnEspacioProps) {
   const [data, setData] = useState<SpaceData>(initialData);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [animateNumber, setAnimateNumber] = useState(false);
   const [error, setError] = useState(false);
-  const [previousValue, setPreviousValue] = useState<number | null>(initialData.number);
 
   // Estado para el componente Alert
   const [showAlert, setShowAlert] = useState(false);
@@ -43,11 +44,9 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
     message: ""
   });
 
-  // Referencia para almacenar el número anterior de astronautas
-  const prevNumberRef = useRef<number>(initialData.number);
-
-  // Referencia para prevenir notificaciones en el montaje inicial
-  const isInitialMount = useRef(true);
+  // Solo comparamos contra una respuesta recibida en esta sesión, nunca el 0 inicial.
+  const latestDataRef = useRef<SpaceData | null>(null);
+  const requestInFlightRef = useRef(false);
 
   // Función para mostrar una alerta
   const showNotification = (type: AlertType, title: string, message: string): void => {
@@ -57,35 +56,33 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
 
   // Función para obtener datos actualizados
   const fetchData = useCallback(async (): Promise<void> => {
-    if (loading) return;
+    if (requestInFlightRef.current) return;
 
+    requestInFlightRef.current = true;
     setLoading(true);
 
     try {
       const newData: SpaceData = await getPeopleInSpace();
       const usingFallback = newData.isFallback === true || newData.message.toLowerCase().includes("fallback");
       setError(usingFallback);
+      const previous = latestDataRef.current;
+      const delta = getRosterDelta(previous, newData);
 
-      // Sin cambios en los datos, salir temprano
-      if (JSON.stringify(newData.people) === JSON.stringify(data.people)) {
-        return;
-      }
-
-      // Solo notificar si no es la primera carga (montaje inicial)
-      if (!isInitialMount.current) {
+      // Solo comparar dos lecturas reales consecutivas; nunca contra el placeholder.
+      if (previous && delta !== null) {
         // Identificar astronautas que han llegado o partido desde la última actualización
         const newAstronauts = newData.people.filter(
           (astronaut: AstronautData) =>
-            !data.people.some((a: AstronautData) => a.name === astronaut.name)
+            !previous.people.some((a: AstronautData) => a.name === astronaut.name)
         );
 
-        const departedAstronauts = data.people.filter(
+        const departedAstronauts = previous.people.filter(
           (astronaut: AstronautData) =>
             !newData.people.some((a: AstronautData) => a.name === astronaut.name)
         ).map((a: AstronautData) => a.name);
 
         // Notificar dependiendo del cambio
-        if (newData.number > prevNumberRef.current) {
+        if (delta > 0) {
           const newAstronautNames = newAstronauts.map((a: AstronautData) => a.name);
           const message = newAstronautNames.length > 0
             ? `Nuevos astronautas: ${newAstronautNames.join(", ")}`
@@ -96,7 +93,7 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
             `¡El número de astronautas ha aumentado a ${newData.number}!`,
             message
           );
-        } else if (newData.number < prevNumberRef.current) {
+        } else if (delta < 0) {
           const message = departedAstronauts.length > 0
             ? `Astronautas que han regresado: ${departedAstronauts.join(", ")}`
             : "Algunos astronautas han regresado a la Tierra";
@@ -109,23 +106,19 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
         }
       }
 
-      // Actualizar la referencia del número anterior
-      prevNumberRef.current = newData.number;
-
-      // Actualizar estado
-      setPreviousValue(data.number); // Store previous value for comparison
+      latestDataRef.current = newData;
       setData(newData);
-      setAnimateNumber(true);
-      setTimeout(() => setAnimateNumber(false), 1000);
-
-      // Ya no estamos en el montaje inicial
-      isInitialMount.current = false;
+      onDataChange?.(newData);
+      if (!previous || previous.number !== newData.number) {
+        setAnimateNumber(true);
+        setTimeout(() => setAnimateNumber(false), 1000);
+      }
     } catch (error) {
       console.error("Error refreshing data:", error);
       setError(true);
 
       // Notificar error si no es el montaje inicial
-      if (!isInitialMount.current) {
+      if (latestDataRef.current !== null) {
         showNotification(
           "error",
           "Error al actualizar datos",
@@ -134,8 +127,9 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
       }
     } finally {
       setLoading(false);
+      requestInFlightRef.current = false;
     }
-  }, [data.people, data.number, loading]);
+  }, [onDataChange]);
 
   // Handler for the refresh button
   const handleRefreshClick = (): void => {
@@ -149,18 +143,15 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
 
   // Efecto para programar actualizaciones periódicas
   useEffect(() => {
-    // Hacer una actualización inicial después del montaje
-    const initialFetchTimeout = setTimeout(() => {
-      fetchData();
-    }, 1000); // Pequeño retraso inicial
+    // Primera consulta inmediata. La cuenta atrás no debe reiniciar la carga inicial.
+    void fetchData();
 
     // Programar actualizaciones periódicas
     const interval = setInterval(() => {
-      fetchData();
+      void fetchData();
     }, AUTO_UPDATE_INTERVAL);
 
     return () => {
-      clearTimeout(initialFetchTimeout);
       clearInterval(interval);
     };
   }, [fetchData]);
@@ -207,6 +198,8 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
               <div className="absolute inset-2 rounded-full border-2 border-blue-400/20"></div>
               <div className="absolute inset-0 rounded-full border-t-4 border-blue-500 animate-spin-slow"></div>
               <motion.div
+                aria-live="polite"
+                aria-busy={data.message === "loading"}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-3xl sm:text-4xl md:text-5xl font-bold rounded-full w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 flex items-center justify-center shadow-lg glow-effect"
                 animate={animateNumber ? { scale: [1, 1.2, 1] } : {}}
                 transition={{ duration: 0.5 }}
@@ -218,29 +211,10 @@ export function PersonasEnEspacio({ initialData }: PersonasEnEspacioProps) {
             <div className="mb-3">
               <h3 className="text-blue-300 text-lg font-medium mb-1 flex items-center justify-center gap-2">
                 <Users className="w-5 h-5 icon-hover floating" />
-                <span>Astronautas actualmente en el espacio</span>
+                <span>{data.message === "loading" ? "Consultando datos de astronautas..." : "Astronautas actualmente en el espacio"}</span>
               </h3>
               <p className="text-blue-200 text-sm">
-                {previousValue !== null && previousValue !== data.number && (
-                  <span className="flex items-center justify-center gap-1 text-xs mb-1">
-                    {previousValue < data.number ? (
-                      <>
-                        <TrendingUp className="w-4 h-4 text-green-400 icon-hover-spin" />
-                        <span className="text-green-400 pulse-effect-fast">
-                          +{data.number - previousValue} desde la última actualización
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown className="w-4 h-4 text-amber-400 icon-hover-shake" />
-                        <span className="text-amber-400 pulse-effect-fast">
-                          -{previousValue - data.number} desde la última actualización
-                        </span>
-                      </>
-                    )}
-                  </span>
-                )}
-                Se actualiza cada {AUTO_UPDATE_INTERVAL / 60000} minutos, cuando cambia el número de astronautas
+                Consultamos el número de astronautas cada {AUTO_UPDATE_INTERVAL / 60000} minutos.
               </p>
             </div>
 

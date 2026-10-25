@@ -45,6 +45,17 @@ function liveSource() {
   }), { status: 200, headers: { "content-type": "application/json" } });
 }
 
+function communitySource(people = [
+  { name: "Astronaut A", iss: true, spacecraft: "Soyuz MS-29" },
+  { name: "Astronaut B", iss: false, spacecraft: "Shenzhou 23" },
+  { name: "Astronaut C", iss: false, spacecraft: "Artemis II" }
+], number = people.length) {
+  return new Response(JSON.stringify({ number, people }), {
+    status: 200,
+    headers: { "content-type": "application/json" }
+  });
+}
+
 async function invoke(url = path) {
   return onRequestGet({ env: {}, request: new Request(url) });
 }
@@ -61,7 +72,7 @@ test("shares a valid live snapshot at the edge across visitors and query variati
   let upstreamCalls = 0;
   globalThis.fetch = async () => {
     upstreamCalls++;
-    return liveSource();
+    return communitySource();
   };
 
   const first = await (await invoke(`${path}?utm_source=one`)).json();
@@ -69,7 +80,8 @@ test("shares a valid live snapshot at the edge across visitors and query variati
   const second = await secondResponse.json();
 
   assert.equal(upstreamCalls, 1, "a second visitor must not consume another upstream request");
-  assert.equal(second.source, "launch-library-2");
+  assert.equal(second.source, "community-roster");
+  assert.deepEqual(second.people.map(({ craft }) => craft), ["ISS", "Tiangong", "Artemis II"]);
   assert.equal(second.isFallback, false);
   assert.equal(second.lastSuccessfulUpdate, first.lastSuccessfulUpdate);
   assert.equal(second.timestamp, first.timestamp, "cached data must not masquerade as newly fetched");
@@ -85,18 +97,20 @@ test("backs off when both upstreams fail rather than retrying for each visitor",
   console.error = (message) => expectedErrors.push(String(message));
   globalThis.fetch = async (url) => {
     upstreamCalls++;
-    return new Response("unavailable", { status: String(url).includes("thespacedevs") ? 429 : 521 });
+    return new Response("unavailable", {
+      status: String(url).includes("thespacedevs") ? 429 : String(url).includes("open-notify") ? 521 : 503
+    });
   };
 
   const first = await (await invoke()).json();
   const second = await (await invoke(`${path}?refresh=1`)).json();
 
-  assert.equal(upstreamCalls, 2, "a cached degraded response must prevent repeated outbound calls");
+  assert.equal(upstreamCalls, 3, "a cached degraded response must prevent repeated outbound calls");
   assert.equal(first.status, "fallback");
   assert.equal(second.source, "static-fallback");
   assert.equal(second.isFallback, true);
   assert.equal(second.lastSuccessfulUpdate, null);
-  assert.equal(expectedErrors.length, 2);
+  assert.equal(expectedErrors.length, 3);
   console.error = originalConsoleError;
 });
 
@@ -106,7 +120,7 @@ test("preserves the live path when edge cache is unavailable or errors", async (
   console.error = (message) => expectedErrors.push(String(message));
   globalThis.fetch = async () => {
     upstreamCalls++;
-    return liveSource();
+    return communitySource();
   };
 
   globalThis.caches = undefined;
@@ -138,9 +152,55 @@ test("caches health inspections so they do not exhaust the same upstream quota",
   const first = await (await onHealthRequestGet({ request: new Request("https://spacepeople.example/api/health?check=1") })).json();
   const second = await (await onHealthRequestGet({ request: new Request("https://spacepeople.example/api/health?check=2") })).json();
 
-  assert.equal(upstreamCalls, 3, "a second health check must not re-fetch all three upstreams");
+  assert.equal(upstreamCalls, 4, "a second health check must not re-fetch all four upstreams");
+  assert.ok(first.apis.some(({ source }) => source === "community-roster"));
   assert.equal(first.timestamp, second.timestamp);
   assert.equal(second.overall, "healthy");
   assert.equal(edge.entries.size, 1);
   assert.match([...edge.entries.values()][0].headers.get("cache-control"), /max-age=1800/);
+});
+
+test("rejects a count mismatch in the community roster and uses Launch Library 2", async () => {
+  globalThis.caches = fakeEdgeCache();
+  const requested = [];
+  const errors = [];
+  console.error = (message) => errors.push(String(message));
+  globalThis.fetch = async (url) => {
+    requested.push(String(url));
+    return requested.length === 1 ? communitySource(undefined, 4) : liveSource();
+  };
+
+  const result = await (await invoke()).json();
+
+  assert.match(requested[0], /corquaid\.github\.io\/international-space-station-APIs\/JSON\/people-in-space\.json/);
+  assert.match(requested[1], /ll\.thespacedevs\.com/);
+  assert.equal(result.source, "launch-library-2");
+  assert.equal(result.status, "live");
+  assert.equal(errors.length, 1);
+  console.error = originalConsoleError;
+});
+
+test("rejects invalid station flags and duplicate crew without caching them as live", async () => {
+  globalThis.caches = fakeEdgeCache();
+  const errors = [];
+  console.error = (message) => errors.push(String(message));
+  const invalidRosters = [
+    communitySource([{ name: "A", iss: "false", spacecraft: "Shenzhou 23" }]),
+    communitySource([
+      { name: "Duplicate", iss: true, spacecraft: "Crew Dragon" },
+      { name: " Duplicate ", iss: true, spacecraft: "Crew Dragon" }
+    ]),
+    communitySource([{ name: "Missing craft", iss: false }])
+  ];
+
+  for (const invalidRoster of invalidRosters) {
+    globalThis.caches = fakeEdgeCache();
+    let calls = 0;
+    globalThis.fetch = async () => (++calls === 1 ? invalidRoster.clone() : liveSource());
+    const result = await (await invoke()).json();
+    assert.equal(calls, 2);
+    assert.equal(result.source, "launch-library-2");
+  }
+  assert.equal(errors.length, 3);
+  console.error = originalConsoleError;
 });

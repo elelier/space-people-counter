@@ -23,6 +23,7 @@ type HealthCheckResult = {
 };
 
 const SPACE_PEOPLE_PRIMARY_API = "https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100";
+const SPACE_PEOPLE_COMMUNITY_API = "https://corquaid.github.io/international-space-station-APIs/JSON/people-in-space.json";
 const HEALTH_EDGE_TTL_SECONDS = 30 * 60;
 
 type HealthCache = {
@@ -122,6 +123,7 @@ export const onRequestGet = async ({ request }: { request?: Request } = {}) => {
   const startedAt = Date.now();
   const checks = await Promise.all([
     checkApiHealth("ISS Location (wheretheiss.at)", "https://api.wheretheiss.at/v1/satellites/25544", "wheretheiss"),
+    checkApiHealth("People in Space (community roster)", SPACE_PEOPLE_COMMUNITY_API, "community-roster"),
     checkApiHealth("People in Space (launch-library-2)", SPACE_PEOPLE_PRIMARY_API, "launch-library-2"),
     checkApiHealth("People in Space (open-notify)", "https://api.open-notify.org/astros.json", "open-notify")
   ]);
