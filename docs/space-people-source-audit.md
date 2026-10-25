@@ -1,6 +1,6 @@
 # Space People Source Audit
 
-Date: 2026-06-06
+Original audit: 2026-06-06; source priority updated 2026-10-24.
 
 ## Product semantics
 
@@ -14,7 +14,8 @@ Suborbital flights are intentionally excluded because they can temporarily incre
 
 | Source | Decision | Why |
 | --- | --- | --- |
-| Launch Library 2 / The Space Devs astronauts endpoint | Primary live source | Structured API, supports `in_space=true`, broad orbital-person coverage beyond ISS-only assumptions. |
+| Community crew roster (corquaid, GitHub Pages) | Primary fetched source | Free public JSON including ISS and Tiangong; independently checked against NASA Expedition 75 and Shenzhou 23 reporting on 2026-10-24. Maintained manually; not guaranteed real-time. |
+| Launch Library 2 / The Space Devs astronauts endpoint | Secondary source | Structured `in_space=true` API; unauthenticated 15/hour limit and recent 429s make it unsuitable as the default source. |
 | Open Notify astros endpoint | Secondary live source | Simple and compatible with the legacy shape, but historically unstable and schema-light. |
 | NASA public APIs | Not used as primary | NASA has authoritative ISS content/news, but no simple official public endpoint found for all humans currently in orbit. |
 | WhereTheISS | Not used for people count | Good for ISS location only; not a crew/person source. |
@@ -24,6 +25,17 @@ Suborbital flights are intentionally excluded because they can temporarily incre
 
 ## Source notes
 
+### Community crew roster (primary)
+
+Runtime URL: `https://corquaid.github.io/international-space-station-APIs/JSON/people-in-space.json`.
+
+- Public MIT-licensed project: https://github.com/corquaid/international-space-station-APIs.
+- The `number` field must match the deduplicated roster size; every person must have a non-empty `name`, a boolean `iss` flag, and a non-empty `spacecraft`.
+- `iss: true` maps to `ISS`; a non-ISS Shenzhou/Tiangong spacecraft maps to `Tiangong`; other spacecraft retain their names (not every non-ISS mission is Chinese).
+- No credentials, new database, or new Cloudflare binding is needed. The existing 30-minute `caches.default` edge response cache remains in place.
+- The maintainer updates the roster around crew changes. An HTTP 200 only proves a successful fetch, **not** that human-curated data has zero delay. `status: live` means fetched upstream, not a guarantee of second-by-second accuracy.
+- Reference for human cross-check: https://www.nasa.gov/mission/expedition-75/ and https://english.scio.gov.cn/m/chinavoices/2026-05/24/content_118511159.html.
+
 ### Launch Library 2 / The Space Devs
 
 Runtime URL used by the app:
@@ -32,7 +44,7 @@ Runtime URL used by the app:
 https://ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100
 ```
 
-Expected role: primary live source.
+Expected role: secondary source if the community feed cannot be validated or fetched.
 
 Coverage intent:
 
@@ -88,7 +100,7 @@ NASA/ISS pages and news remain useful for human audit and documentation, not for
 
 ### Tiangong / CMSA current crew
 
-Decision: not used as runtime source in this PR.
+Decision: the community roster includes Shenzhou/Tiangong. CMSA reporting is audit evidence, not a separate runtime API.
 
 Tiangong coverage is essential for the product semantics, but no stable public JSON API was identified for current Tiangong crew. Recent public reporting is useful for audit and fallback snapshot context only.
 
@@ -113,7 +125,7 @@ The static fallback list was refreshed in this PR as a dated stale snapshot from
 - ISS: Sergey Kud-Sverchkov, Sophie Adenot, Andrey Fedyaev, Jack Hathaway, Jessica Meir, Sergei Mikayev, Christopher Williams.
 - Tiangong: Zhu Yangzhu, Zhang Zhiyuan, Lai Ka-ying.
 
-This list is intentionally returned only with:
+This June snapshot is now known to have outdated ISS members, and is intentionally returned only with:
 
 ```json
 {

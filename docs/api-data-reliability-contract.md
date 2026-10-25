@@ -23,7 +23,7 @@ Every public `/api/*` response should include these fields when applicable:
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `status` | string | yes | Data status for the response. Data endpoints use `live` or `fallback`; health uses `healthy`, `degraded`, or `down`. |
+| `status` | string | yes | Data status for the response. `live` means successfully fetched upstream (not guaranteed moment-by-moment fresh); `fallback` means local fallback. Health uses `healthy`, `degraded`, or `down`. |
 | `source` | string | yes | Source identifier such as `launch-library-2`, `open-notify`, `wheretheiss`, `static-fallback`, `simulated-fallback`, or `cloudflare-pages-functions-health-check`. |
 | `isFallback` | boolean | yes | `true` only when the payload is fallback/simulated rather than verified live upstream data. |
 | `timestamp` | string or number | yes | Time the response was created. |
@@ -54,10 +54,11 @@ The endpoint resolves people-in-space data through this explicit source architec
 
 ### Source order
 
-1. Primary live source: Launch Library 2 / The Space Devs astronauts endpoint with `in_space=true`, exposed as `source: "launch-library-2"`.
-2. Optional custom source: `SPACE_PEOPLE_API` or `NEXT_PUBLIC_SPACE_PEOPLE_API`, exposed as `source: "custom-space-people-api"`.
-3. Secondary live source: Open Notify `https://api.open-notify.org/astros.json`, exposed as `source: "open-notify"`.
-4. Last-resort static fallback: local stale snapshot, exposed as `source: "static-fallback"` and `isFallback: true`.
+1. Primary fetched source: public manually-maintained crew JSON at `corquaid.github.io/international-space-station-APIs/JSON/people-in-space.json`, exposed as `source: "community-roster"`.
+2. Secondary live source: Launch Library 2 / The Space Devs astronauts endpoint with `in_space=true`, exposed as `source: "launch-library-2"`. Its existing `SPACE_PEOPLE_PRIMARY_API` override remains supported for compatibility.
+3. Optional custom source: `SPACE_PEOPLE_API` or `NEXT_PUBLIC_SPACE_PEOPLE_API`, exposed as `source: "custom-space-people-api"`.
+4. Next secondary source: Open Notify `https://api.open-notify.org/astros.json`, exposed as `source: "open-notify"`.
+5. Last-resort static fallback: local stale snapshot, exposed as `source: "static-fallback"` and `isFallback: true`.
 
 Static fallback must only happen after every live source fails or returns invalid people data.
 
@@ -68,6 +69,7 @@ Static fallback must only happen after every live source fails or returns invali
 - Live payload `number` must equal the final deduped `people.length`.
 - If an upstream reports a mismatched count, that source is rejected and the endpoint tries the next source.
 - If a live source lacks craft/station metadata, `craft` is set to `Unknown spacecraft`; the endpoint must not invent a craft.
+- The community roster adapter is stricter: it rejects missing names, non-boolean station flags, missing spacecraft, duplicated identities, or a count mismatch. It maps `iss: true` to `ISS`, Shenzhou/Tiangong flights to `Tiangong`, and otherwise retains the spacecraft name.
 
 ### Live response
 
@@ -77,7 +79,7 @@ Static fallback must only happen after every live source fails or returns invali
   "people": [{ "name": "Example", "craft": "ISS" }],
   "message": "success",
   "status": "live",
-  "source": "launch-library-2",
+  "source": "community-roster",
   "isFallback": false,
   "timestamp": "2026-06-06T00:00:00.000Z",
   "lastSuccessfulUpdate": "2026-06-06T00:00:00.000Z",
@@ -86,11 +88,11 @@ Static fallback must only happen after every live source fails or returns invali
 }
 ```
 
-If Launch Library 2 fails but Open Notify succeeds, the same contract applies with `source: "open-notify"`, `status: "live"`, and `isFallback: false`.
+If the community feed fails but Launch Library 2 succeeds, the contract uses `source: "launch-library-2"`. A downstream Open Notify success uses `source: "open-notify"`. A successful community fetch is not proof of immediate human-curated freshness.
 
 ### Fallback response
 
-Expected when Launch Library 2, custom source if configured, and Open Notify are down, time out, or return invalid data. The endpoint preserves a dated fallback snapshot but marks it explicitly.
+Expected when the community feed, Launch Library 2, the custom source if configured, and Open Notify are down, time out, or return invalid data. The endpoint preserves a dated fallback snapshot but marks it explicitly.
 
 ```json
 {
@@ -125,6 +127,7 @@ Health is not a data fallback endpoint. It reports the function runtime's view o
 
 - `launch-library-2`
 - `open-notify`
+- `community-roster`
 - `wheretheiss`
 
 `/api/health` may report `down` even if a direct endpoint succeeds moments later. Treat that as upstream intermittency unless production evidence proves a runtime outage.
@@ -162,4 +165,4 @@ These checks do not call external APIs and are safe for CI because upstream heal
 
 ## Next recommended story
 
-Add a manual curated station crew fallback file with explicit `validFrom` and `validUntil` windows, or decide whether Cloudflare KV last-known-good cache is acceptable for this project.
+After confirming Preview from Cloudflare Pages Functions, decide whether durable last-known-good cache is needed. The current edge cache works per Cloudflare data center, with a 30-minute live TTL and a 15-minute static fallback TTL; it is not persistent storage.

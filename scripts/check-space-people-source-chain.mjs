@@ -8,6 +8,10 @@ const requiredEndpointTokens = [
   "type SourceAdapter",
   "type SourceCoverage",
   "type SourceDecision",
+  "DEFAULT_COMMUNITY_API_URL",
+  "corquaid.github.io/international-space-station-APIs/JSON/people-in-space.json",
+  "SOURCE_COMMUNITY_ROSTER",
+  "community-roster",
   "DEFAULT_PRIMARY_API_URL",
   "ll.thespacedevs.com/2.3.0/astronauts/?in_space=true&limit=100",
   "SOURCE_LAUNCH_LIBRARY",
@@ -20,6 +24,7 @@ const requiredEndpointTokens = [
   "SPACE_PEOPLE_OPEN_NOTIFY_API",
   "dedupePeople",
   "validatePayload",
+  "normalizeCommunityRosterData",
   "normalizeLaunchLibraryData",
   "normalizeOpenNotifyData",
   "fetchSpacePeopleSource",
@@ -53,7 +58,8 @@ for (const token of requiredAuditTokens) {
   assert.ok(auditSource.includes(token), `docs/space-people-source-audit.md is missing ${token}`);
 }
 
-const primaryIndex = endpointSource.indexOf("source: SOURCE_LAUNCH_LIBRARY");
+const primaryIndex = endpointSource.indexOf("source: SOURCE_COMMUNITY_ROSTER");
+const launchLibraryIndex = endpointSource.indexOf("source: SOURCE_LAUNCH_LIBRARY");
 const customIndex = endpointSource.indexOf("source: SOURCE_CUSTOM");
 const secondaryIndex = endpointSource.indexOf("source: SOURCE_OPEN_NOTIFY");
 const fallbackIndex = endpointSource.indexOf("source: SOURCE_FALLBACK");
@@ -61,7 +67,8 @@ const validateIndex = endpointSource.indexOf("validatePayload");
 const dedupeIndex = endpointSource.indexOf("dedupePeople");
 
 assert.ok(primaryIndex > -1, "primary source is not declared");
-assert.ok(customIndex > primaryIndex, "custom source must remain after the primary live source");
+assert.ok(launchLibraryIndex > primaryIndex, "Launch Library 2 must remain after the community primary");
+assert.ok(customIndex > launchLibraryIndex, "custom source must remain after Launch Library 2");
 assert.ok(secondaryIndex > customIndex, "Open Notify must remain after the custom source");
 assert.ok(fallbackIndex > secondaryIndex, "static fallback must remain after all live sources");
 assert.ok(validateIndex > -1, "payload validation must exist");
@@ -150,26 +157,40 @@ const resolveMockChain = async (sources) => {
 };
 
 const primaryLive = await resolveMockChain([
+  { source: "community-roster", fails: false },
   { source: "launch-library-2", fails: false },
   { source: "open-notify", fails: false }
 ]);
 
 assert.equal(primaryLive.status, "live");
-assert.equal(primaryLive.source, "launch-library-2");
+assert.equal(primaryLive.source, "community-roster");
 assert.equal(primaryLive.isFallback, false);
 assert.equal(primaryLive.error, null);
 assert.equal(primaryLive.lastSuccessfulUpdate, primaryLive.timestamp);
 
 const secondaryLive = await resolveMockChain([
-  { source: "launch-library-2", fails: true },
+  { source: "community-roster", fails: true },
+  { source: "launch-library-2", fails: false },
   { source: "open-notify", fails: false }
 ]);
 
 assert.equal(secondaryLive.status, "live");
-assert.equal(secondaryLive.source, "open-notify");
+assert.equal(secondaryLive.source, "launch-library-2");
 assert.equal(secondaryLive.isFallback, false);
 assert.equal(secondaryLive.error, null);
 assert.equal(secondaryLive.lastSuccessfulUpdate, secondaryLive.timestamp);
+
+const tertiaryLive = await resolveMockChain([
+  { source: "community-roster", fails: true },
+  { source: "launch-library-2", fails: true },
+  { source: "open-notify", fails: false }
+]);
+
+assert.equal(tertiaryLive.status, "live");
+assert.equal(tertiaryLive.source, "open-notify");
+assert.equal(tertiaryLive.isFallback, false);
+assert.equal(tertiaryLive.error, null);
+assert.equal(tertiaryLive.lastSuccessfulUpdate, tertiaryLive.timestamp);
 
 const dedupedPeople = dedupePeople([
   { name: "Jessica Meir", craft: "ISS" },
@@ -206,6 +227,7 @@ assert.throws(
 );
 
 const allFailFallback = await resolveMockChain([
+  { source: "community-roster", fails: true },
   { source: "launch-library-2", fails: true },
   { source: "open-notify", fails: true }
 ]);
@@ -214,6 +236,7 @@ assert.equal(allFailFallback.status, "fallback");
 assert.equal(allFailFallback.source, "static-fallback");
 assert.equal(allFailFallback.isFallback, true);
 assert.equal(allFailFallback.lastSuccessfulUpdate, null);
+assert.match(allFailFallback.error, /community-roster failed/);
 assert.match(allFailFallback.error, /launch-library-2 failed/);
 assert.match(allFailFallback.error, /open-notify failed/);
 
