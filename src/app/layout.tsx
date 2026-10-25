@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeWrapper } from "@/components/ThemeWrapper";
+import { getSocialImageUrl } from "@/lib/socialMetadata";
+
+const socialImageUrl = getSocialImageUrl(process.env.CF_PAGES_BRANCH, process.env.CF_PAGES_URL);
 
 const inter = Inter({
   variable: "--font-inter",
@@ -49,7 +52,7 @@ export const metadata: Metadata = {
     siteName: "Space People Counter",
     images: [
       {
-        url: "/social-space-people.png",
+        url: socialImageUrl,
         width: 1734,
         height: 907,
         alt: "La Tierra vista desde el espacio, un astronauta y la pregunta: ¿Cuántas personas hay en el espacio ahora?",
@@ -64,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "¿Cuántas personas hay en el espacio ahora?",
     description: "Descubre el contador actualizado de astronautas y sus misiones.",
-    images: ["/social-space-people.png"],
+    images: [socialImageUrl],
   },
   
   // Configuración adicional
