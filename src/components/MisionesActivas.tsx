@@ -106,27 +106,29 @@ export function MisionesActivas({ astronautas }: MisionesActivasProps) {
                     </div>
                   )}
 
-                  {/* Barra de progreso */}
-                  <div className="mt-auto">
-                    <div className="flex items-center gap-2 w-full mb-2">
-                      <div className="text-xs text-blue-300 whitespace-nowrap">
-                        {missionDetails ? `${missionDetails.progress}%` : ''}
+                  {/* No inventar progreso ni ofrecer un botón sin ficha disponible. */}
+                  {missionDetails && (
+                    <div className="mt-auto">
+                      <div className="flex items-center gap-2 w-full mb-2">
+                        <div className="text-xs text-blue-300 whitespace-nowrap">
+                          {missionDetails.progress}%
+                        </div>
+                        <Progress
+                          value={missionDetails.progress}
+                          className="w-full h-2 bg-blue-950 group-hover:bg-blue-900 transition-colors"
+                        />
                       </div>
-                      <Progress
-                        value={missionDetails?.progress || 50}
-                        className="w-full h-2 bg-blue-950 group-hover:bg-blue-900 transition-colors"
-                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs text-blue-300 hover:text-blue-100 hover:bg-blue-800/50 self-end w-full button-hover"
+                        onClick={handleDetailClick}
+                      >
+                        <Info className="w-3 h-3 mr-1 icon-hover" />
+                        Ver detalles
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2 text-xs text-blue-300 hover:text-blue-100 hover:bg-blue-800/50 self-end w-full button-hover"
-                      onClick={handleDetailClick}
-                    >
-                      <Info className="w-3 h-3 mr-1 icon-hover" />
-                      Ver detalles
-                    </Button>
-                  </div>
+                  )}
                 </div>
               );
             })}
