@@ -52,7 +52,7 @@ export function ShareButton() {
         onClick={handleShare}
         disabled={pending}
         variant="outline"
-        className="border-blue-400/60 bg-blue-700/30 text-white hover:bg-blue-600/40 hover:text-white"
+        className="min-h-11 px-5 border-blue-400/60 bg-blue-700/30 text-white hover:bg-blue-600/40 hover:text-white"
       >
         <Share2 className="w-4 h-4 mr-2" aria-hidden="true" />
         {pending ? "Compartiendo..." : "Compartir esta página"}
