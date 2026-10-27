@@ -9,7 +9,7 @@ const compiled = ts.transpileModule(source, {
 }).outputText;
 const { getSocialImageUrl } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
-const productionImage = "https://spacepeople.elelier.com/social-space-people.png";
+const productionImage = "https://spacepeople.elelier.com/social-space-people.jpg";
 
 test("production and local builds keep the canonical social image", () => {
   assert.equal(getSocialImageUrl(), productionImage);
@@ -19,7 +19,7 @@ test("production and local builds keep the canonical social image", () => {
 test("preview builds point the social image at their deployed assets", () => {
   assert.equal(
     getSocialImageUrl("feat/ruta-a-share-og-ga4", "https://abcdef.space-people-counter.pages.dev"),
-    "https://abcdef.space-people-counter.pages.dev/social-space-people.png",
+    "https://abcdef.space-people-counter.pages.dev/social-space-people.jpg",
   );
 });
 
