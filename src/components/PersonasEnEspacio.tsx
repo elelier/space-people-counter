@@ -9,6 +9,7 @@ import { getRosterDelta } from "@/services/counterDelta";
 import { RefreshCcw, Users } from "lucide-react";
 import { UpdateCountdown } from "./UpdateCountdown";
 import { Alert, AlertType } from "@/components/ui/alert";
+import { ShareButton } from "./ShareButton";
 
 // Intervalo de actualización automática: 5 minutos
 const AUTO_UPDATE_INTERVAL = 5 * 60 * 1000;
@@ -225,6 +226,8 @@ export function PersonasEnEspacio({ initialData, onDataChange }: PersonasEnEspac
                 className="text-blue-300 text-sm"
               />
             </div>
+
+            <ShareButton />
 
             {error && (
               <div className="mt-4 p-3 bg-red-900/50 border border-red-500/50 rounded-md text-white">

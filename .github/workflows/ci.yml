@@ -46,5 +46,8 @@ jobs:
       - name: API contract check
         run: npm run check:api-contract
 
+      - name: Sharing behavior
+        run: npm run test:share
+
       - name: Build
         run: npm run build
