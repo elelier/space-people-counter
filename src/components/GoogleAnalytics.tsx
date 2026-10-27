@@ -1,4 +1,5 @@
 import Script from 'next/script'
+import { getGaBootstrapScript } from '@/lib/analytics'
 
 const GA_MEASUREMENT_ID = 'G-8KTLDRRQTP'
 
@@ -11,12 +12,7 @@ export function GoogleAnalytics() {
         async
       />
       <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_MEASUREMENT_ID}');
-        `}
+        {getGaBootstrapScript(GA_MEASUREMENT_ID)}
       </Script>
     </>
   )

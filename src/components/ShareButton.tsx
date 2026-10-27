@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { recordShareEvent } from "@/lib/analytics";
 import { SHARE_URL, sharePage, type ShareResult } from "@/lib/sharePage";
 
 const messages: Record<ShareResult, string> = {
@@ -29,15 +30,7 @@ export function ShareButton() {
         copy: navigator.clipboard?.writeText
           ? (url) => navigator.clipboard.writeText(url)
           : undefined,
-        track: (method) => {
-          if (typeof window.gtag === "function") {
-            window.gtag("event", "share", {
-              method,
-              content_type: "website",
-              item_id: SHARE_URL,
-            });
-          }
-        },
+        track: (method) => recordShareEvent(window, method, SHARE_URL),
       });
       setResult(outcome);
     } finally {
