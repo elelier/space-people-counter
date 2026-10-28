@@ -36,6 +36,7 @@ import {
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 import type { ChartData, ChartOptions } from 'chart.js';
+import { formatHistoricalDate } from '@/lib/formatHistoricalDate';
 
 // Register Chart.js components
 ChartJS.register(
@@ -358,11 +359,7 @@ export function HistoricalAstronauts() {
                       </div>
                       <div className="md:w-2/3">
                         <div className="text-xs text-indigo-300 mb-1">
-                          {new Date(spaceMilestones[selectedMilestone].date).toLocaleDateString('es-ES', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
+                          {formatHistoricalDate(spaceMilestones[selectedMilestone].date)}
                         </div>
                         <h4 className="text-xl font-semibold text-white">
                           {spaceMilestones[selectedMilestone].event}
