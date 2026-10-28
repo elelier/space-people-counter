@@ -396,7 +396,8 @@ export function SpaceStationsInfo() {
           </div>
 
           <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-blue-800/30 text-center text-blue-300 text-xs sm:text-sm">
-            <p>Datos proporcionados por Open Notify API - En tiempo real</p>
+            <p>Conteo: registro comunitario, Launch Library 2 u Open Notify, según disponibilidad.</p>
+            <p className="mt-1">Ubicación ISS: WhereTheISS por defecto. Puede mostrarse información de respaldo o simulada si una fuente falla.</p>
             <p className="mt-1">&copy; 2025 Space People Counter</p>
           </div>
         </div>

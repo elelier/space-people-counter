@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { getMapTileAttribution } from "@/lib/mapAttribution";
 
 // Solución para el problema de los iconos en SSR con Leaflet
 const SpaceStationIcon = new L.Icon({
@@ -212,10 +213,10 @@ export default function MapComponent({
       scrollWheelZoom={true}
       style={{ height: mapHeight, width: "100%" }}
       className="z-0 bg-blue-950"
-      attributionControl={false} // Ocultar atribución para ahorrar espacio en móviles
+      attributionControl={true}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        attribution={getMapTileAttribution(isDayTime)}
         url={mapTileUrl}
       />
       <Marker position={[latitude, longitude]} icon={SpaceStationIcon}>

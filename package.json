@@ -13,6 +13,7 @@
     "test:space-people-runtime": "node scripts/test-space-people-runtime.mjs",
     "test:counter-delta": "node scripts/test-counter-delta.mjs",
     "test:historical-dates": "node --test scripts/test-historical-dates.mjs",
+    "test:map-attribution": "node --test scripts/test-map-attribution.mjs",
     "test:share": "node --test scripts/test-share-page.mjs scripts/test-social-metadata.mjs scripts/test-share-analytics.mjs",
     "build:analyze": "ANALYZE=true npm run build"
   },
