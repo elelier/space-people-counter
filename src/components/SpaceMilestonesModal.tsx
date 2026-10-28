@@ -6,6 +6,7 @@ import { X, Calendar, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { HistoricalMilestone } from "@/services/historicalAstronautData";
+import { formatHistoricalDate } from "@/lib/formatHistoricalDate";
 
 interface SpaceMilestonesModalProps {
   isOpen: boolean;
@@ -127,11 +128,7 @@ export function SpaceMilestonesModal({ isOpen, onClose, milestones }: SpaceMiles
             </div>
             <div className="md:w-3/5">
               <div className="text-xs text-indigo-300 mb-1">
-                {new Date(milestones[selectedMilestone].date).toLocaleDateString('es-ES', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
+                {formatHistoricalDate(milestones[selectedMilestone].date)}
               </div>
               <h4 className="text-xl font-semibold text-white mb-2 link-hover">
                 {milestones[selectedMilestone].event}
