@@ -365,6 +365,11 @@ body {
   transition: width 0.1s linear;
 }
 
+/* Oscurecer únicamente las teselas OSM; marcador y atribución conservan sus colores. */
+.iss-map-tiles-night .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+}
+
 /* Estilos y animaciones del popup de Leaflet */
 .iss-popup .leaflet-popup-content-wrapper {
   background-color: rgba(255, 255, 255, 0.95);

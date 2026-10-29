@@ -37,5 +37,5 @@ test("tracking status is visible outside the collapsible mobile telemetry", () =
   assert.match(panel, /followISS \? "Siguiendo ISS" : "Explorando mapa"/);
   assert.match(panel, /\{!followISS && \(/);
   assert.match(map, /scrollWheelZoom=\{false\}/);
-  assert.match(map, /attribution=\{getMapTileAttribution\(isDayTime\)\}/);
+  assert.match(map, /attribution=\{getMapTileAttribution\(\)\}/);
 });
