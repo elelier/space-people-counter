@@ -210,7 +210,8 @@ export default function MapComponent({
     <MapContainer
       center={[latitude, longitude]}
       zoom={mapZoom}
-      scrollWheelZoom={true}
+      minZoom={2}
+      scrollWheelZoom={false}
       style={{ height: mapHeight, width: "100%" }}
       className="z-0 bg-blue-950"
       attributionControl={true}
