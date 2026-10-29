@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { getISSLocation, ISSLocationData } from "@/services/issLocationApi";
+import { formatOrbitalSpeed } from "@/lib/issOrbitalSpeed";
 import { Button } from "@/components/ui/button";
 import { RefreshCcw, MapPin, AlertCircle, Satellite, Globe, ChevronDown, ChevronUp, Info, Clock, FlaskConical, Users, PlusCircle } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -152,8 +153,8 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
     ? parseFloat(issLocation.iss_position.longitude)
     : 0;
 
-  // Usar valores de la API si están disponibles, de lo contrario usar valores predeterminados
-  const orbitalSpeed = issLocation?.velocity || 27600;
+  // Presentar una única medición orbital validada en panel y popup.
+  const orbitalSpeedDisplay = formatOrbitalSpeed(issLocation);
   const altitudeKm = issLocation?.altitude || 408;
   const visibility = issLocation?.visibility || "unknown";
   const footprint = issLocation?.footprint;
@@ -279,7 +280,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                 longitude={longitude}
                 showGrid={showGrid}
                 altitude={altitudeKm}
-                velocity={orbitalSpeed}
+                orbitalSpeedDisplay={orbitalSpeedDisplay}
                 visibility={visibility}
               />
             )}
@@ -299,8 +300,8 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
               </div>
 
               <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
-                <div className="text-blue-300 text-xs mb-1">Velocidad</div>
-                <div className="text-white font-bold text-sm sm:text-lg">{Math.round(orbitalSpeed)} km/h</div>
+                <div className="text-blue-300 text-xs mb-1">Velocidad orbital</div>
+                <div className="text-white font-bold text-sm sm:text-lg">{orbitalSpeedDisplay}</div>
               </div>
 
               <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
