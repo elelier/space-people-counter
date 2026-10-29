@@ -14,6 +14,7 @@
     "test:counter-delta": "node scripts/test-counter-delta.mjs",
     "test:historical-dates": "node --test scripts/test-historical-dates.mjs",
     "test:map-attribution": "node --test scripts/test-map-attribution.mjs",
+    "test:map-navigation": "node --test scripts/test-map-navigation.mjs",
     "test:share": "node --test scripts/test-share-page.mjs scripts/test-social-metadata.mjs scripts/test-share-analytics.mjs",
     "build:analyze": "ANALYZE=true npm run build"
   },
