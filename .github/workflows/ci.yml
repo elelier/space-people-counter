@@ -43,6 +43,9 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
+      - name: ISS orbital speed regression
+        run: npm run test:orbital-speed
+
       - name: API contract check
         run: npm run check:api-contract
 

@@ -100,7 +100,7 @@ interface MapComponentProps {
   longitude: number;
   showGrid?: boolean;
   altitude?: number;
-  velocity?: number;
+  orbitalSpeedDisplay: string;
   visibility?: string;
 }
 
@@ -109,19 +109,13 @@ export default function MapComponent({
   longitude,
   showGrid = false,
   altitude = 408,
-  velocity = 27600,
+  orbitalSpeedDisplay,
   visibility = "unknown"
 }: MapComponentProps) {
   // Estado para determinar si estamos en el cliente o servidor
   const [isMounted, setIsMounted] = useState(false);
-  // Estado para almacenar la velocidad calculada
-  const [speed, setSpeed] = useState<number | null>(null);
   // Estado para detectar si es un dispositivo móvil
   const [isMobile, setIsMobile] = useState(false);
-  // Ref para almacenar la posición anterior y evitar ciclo infinito
-  const prevPositionRef = useRef<[number, number] | null>(null);
-  // Ref para almacenar la hora de la última actualización
-  const lastUpdateRef = useRef<number | null>(null);
 
   // Garantizar que el componente solo renderice en el cliente
   useEffect(() => {
@@ -139,43 +133,6 @@ export default function MapComponent({
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
-
-  // Calcular velocidad aproximada basada en cambios de posición
-  useEffect(() => {
-    const prevPosition = prevPositionRef.current;
-    const lastUpdate = lastUpdateRef.current;
-
-    if (prevPosition && lastUpdate) {
-      const now = Date.now();
-      const timeDiff = (now - lastUpdate) / 1000; // en segundos
-
-      if (timeDiff > 0) {
-        // Distancia en kilómetros usando la fórmula del haversine
-        const R = 6371; // Radio de la Tierra en km
-        const dLat = ((latitude - prevPosition[0]) * Math.PI) / 180;
-        const dLon = ((longitude - prevPosition[1]) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos((prevPosition[0] * Math.PI) / 180) *
-            Math.cos((latitude * Math.PI) / 180) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
-
-        // Velocidad en km/s * 3600 = km/h
-        const calculatedSpeed = (distance / timeDiff) * 3600;
-        setSpeed(calculatedSpeed);
-      }
-    }
-
-    // Actualizar refs para la próxima vez
-    prevPositionRef.current = [latitude, longitude];
-    lastUpdateRef.current = Date.now();
-  }, [latitude, longitude]);
-
-  // Velocidad orbital típica de la ISS: 27,600 km/h o usar la proporcionada
-  const displaySpeed = speed !== null && speed > 0 ? speed : velocity;
 
   // Determinar si es de día o de noche según el valor de visibilidad
   const isDayTime = visibility === "daylight";
@@ -226,7 +183,7 @@ export default function MapComponent({
             <div className="font-bold mb-2 text-blue-800 text-sm">Estación Espacial Internacional</div>
             <div className="space-y-1 text-xs">
               <div><span className="font-medium">Ubicación:</span> {parseFloat(latitude.toFixed(4))}°, {parseFloat(longitude.toFixed(4))}°</div>
-              <div><span className="font-medium">Velocidad:</span> ~{Math.round(displaySpeed)} km/h</div>
+              <div><span className="font-medium">Velocidad orbital:</span> {orbitalSpeedDisplay}</div>
               <div><span className="font-medium">Altitud:</span> ~{Math.round(altitude)} km</div>
               <div><span className="font-medium">Visibilidad:</span> {visibility === "daylight" ? "Diurna" : (visibility === "eclipsed" ? "Nocturna" : "Desconocida")}</div>
             </div>
