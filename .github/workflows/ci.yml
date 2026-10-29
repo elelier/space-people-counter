@@ -43,6 +43,9 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
+      - name: Map follow controls regression
+        run: npm run test:map-follow
+
       - name: ISS orbital speed regression
         run: npm run test:orbital-speed
 

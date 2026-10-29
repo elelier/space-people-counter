@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, GeoJSON } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getMapTileAttribution } from "@/lib/mapAttribution";
@@ -15,13 +15,25 @@ const SpaceStationIcon = new L.Icon({
   popupAnchor: [0, -21]
 });
 
-// Componente para actualizar la vista del mapa cuando cambian las coordenadas
-function ChangeView({ latitude, longitude }: { latitude: number; longitude: number }) {
-  const map = useMap();
+// La vista sigue la ISS solo mientras el usuario no esté explorando el mapa.
+function ChangeView({
+  latitude,
+  longitude,
+  followISS,
+  onExplore
+}: {
+  latitude: number;
+  longitude: number;
+  followISS: boolean;
+  onExplore: () => void;
+}) {
+  const map = useMapEvents({ dragstart: onExplore });
 
   useEffect(() => {
-    map.setView([latitude, longitude], map.getZoom());
-  }, [latitude, longitude, map]);
+    if (followISS) {
+      map.setView([latitude, longitude], map.getZoom());
+    }
+  }, [latitude, longitude, followISS, map]);
 
   return null;
 }
@@ -102,6 +114,8 @@ interface MapComponentProps {
   altitude?: number;
   orbitalSpeedDisplay: string;
   visibility?: string;
+  followISS: boolean;
+  onExplore: () => void;
 }
 
 export default function MapComponent({
@@ -110,7 +124,9 @@ export default function MapComponent({
   showGrid = false,
   altitude = 408,
   orbitalSpeedDisplay,
-  visibility = "unknown"
+  visibility = "unknown",
+  followISS,
+  onExplore
 }: MapComponentProps) {
   // Estado para determinar si estamos en el cliente o servidor
   const [isMounted, setIsMounted] = useState(false);
@@ -194,7 +210,7 @@ export default function MapComponent({
         </Popup>
       </Marker>
       <GridLines visible={showGrid} />
-      <ChangeView latitude={latitude} longitude={longitude} />
+      <ChangeView latitude={latitude} longitude={longitude} followISS={followISS} onExplore={onExplore} />
     </MapContainer>
   );
 }
