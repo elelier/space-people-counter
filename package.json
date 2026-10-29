@@ -15,6 +15,7 @@
     "test:historical-dates": "node --test scripts/test-historical-dates.mjs",
     "test:map-attribution": "node --test scripts/test-map-attribution.mjs",
     "test:map-navigation": "node --test scripts/test-map-navigation.mjs",
+    "test:map-follow": "node --test scripts/test-map-follow.mjs",
     "test:orbital-speed": "node --test scripts/test-orbital-speed.mjs",
     "test:share": "node --test scripts/test-share-page.mjs scripts/test-social-metadata.mjs scripts/test-share-analytics.mjs",
     "build:analyze": "ANALYZE=true npm run build"

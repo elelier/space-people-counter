@@ -89,6 +89,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   // Estado para el modo de actualización automática
   const [autoUpdateActive, setAutoUpdateActive] = useState<boolean>(true);
+  const [followISS, setFollowISS] = useState<boolean>(true);
   // Estado para mostrar detalles técnicos adicionales
   const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
 
@@ -118,30 +119,14 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
     }
   }, [mapError]);
 
-  // Actualizar la posición cada 5 segundos si la actualización automática está activa
+  // Consulta inicial y cada 5 segundos solo mientras la actualización esté activa.
+  // Al pausar no se dispara una consulta adicional ni se altera la hora mostrada.
   useEffect(() => {
-    // Establecer la hora inicial en el cliente
-    const now = new Date();
-    const hours = now.getHours().toString().padStart(2, "0");
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-    const seconds = now.getSeconds().toString().padStart(2, "0");
-    setLastUpdated(hours + ":" + minutes + ":" + seconds);
+    if (!autoUpdateActive) return;
 
-    // Primera carga después de montarse el componente
     fetchISSLocation();
-
-    // Intervalo para actualización automática
-    let interval: NodeJS.Timeout | null = null;
-
-    if (autoUpdateActive) {
-      interval = setInterval(() => {
-        fetchISSLocation();
-      }, 5000); // Actualizar cada 5 segundos
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    const interval = setInterval(fetchISSLocation, 5000);
+    return () => clearInterval(interval);
   }, [fetchISSLocation, autoUpdateActive]);
 
   // Verificar que iss_position existe antes de intentar acceder a sus propiedades
@@ -185,7 +170,12 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
     setShowFacts(!showFacts);
   };
 
-  // Alternar actualización automática
+  // La exploración manual detiene el centrado, no la actualización de datos.
+  const handleExplore = useCallback(() => setFollowISS(false), []);
+
+  const resumeFollowing = () => setFollowISS(true);
+
+  // Alternar actualización automática sin cambiar el modo de seguimiento.
   const toggleAutoUpdate = () => {
     setAutoUpdateActive(!autoUpdateActive);
   };
@@ -217,7 +207,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                 onClick={toggleAutoUpdate}
               >
                 <Clock className="w-3 h-3 mr-1 icon-hover" />
-                <span>{autoUpdateActive ? "Detener" : "Actualizar en vivo"}</span>
+                <span>{autoUpdateActive ? "Pausar datos" : "Reanudar datos"}</span>
               </Button>
               <Button
                 variant="outline"
@@ -282,7 +272,27 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
                 altitude={altitudeKm}
                 orbitalSpeedDisplay={orbitalSpeedDisplay}
                 visibility={visibility}
+                followISS={followISS}
+                onExplore={handleExplore}
               />
+            )}
+          </div>
+
+          {/* El estado de seguimiento siempre es visible, también en móvil. */}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-blue-900/20 px-3 py-2 text-xs text-blue-100">
+            <span role="status" aria-live="polite">
+              {followISS ? "Siguiendo ISS" : "Explorando mapa"} · {autoUpdateActive ? "actualización automática activa" : "datos pausados"}
+            </span>
+            {!followISS && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-blue-700 text-blue-200 hover:bg-blue-900/40"
+                onClick={resumeFollowing}
+              >
+                <MapPin className="mr-1 h-3 w-3" />
+                Seguir ISS
+              </Button>
             )}
           </div>
 
