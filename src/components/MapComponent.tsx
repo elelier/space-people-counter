@@ -150,8 +150,8 @@ export default function MapComponent({
     };
   }, []);
 
-  // Determinar si es de día o de noche según el valor de visibilidad
-  const isDayTime = visibility === "daylight";
+  // Solo una muestra eclipsada activa el estilo oscuro; "unknown" no implica noche.
+  const isNightTime = visibility === "eclipsed";
 
   if (!isMounted) {
     return (
@@ -170,11 +170,6 @@ export default function MapComponent({
     );
   }
 
-  // Determinar el estilo del mapa según si es día o noche
-  const mapTileUrl = isDayTime
-    ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-    : "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png";
-
   // Altura y zoom del mapa basados en el tamaño de la pantalla
   const mapHeight = isMobile ? "300px" : "400px";
   const mapZoom = isMobile ? 2 : 3;
@@ -190,8 +185,10 @@ export default function MapComponent({
       attributionControl={true}
     >
       <TileLayer
-        attribution={getMapTileAttribution(isDayTime)}
-        url={mapTileUrl}
+        key={isNightTime ? "night" : "day"}
+        attribution={getMapTileAttribution()}
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        className={isNightTime ? "iss-map-tiles-night" : undefined}
       />
       <Marker position={[latitude, longitude]} icon={SpaceStationIcon}>
         <Popup className="iss-popup">

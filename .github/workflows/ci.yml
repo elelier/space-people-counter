@@ -46,6 +46,9 @@ jobs:
       - name: Map follow controls regression
         run: npm run test:map-follow
 
+      - name: Map tile theme and attribution regression
+        run: npm run test:map-attribution
+
       - name: ISS orbital speed regression
         run: npm run test:orbital-speed
 
