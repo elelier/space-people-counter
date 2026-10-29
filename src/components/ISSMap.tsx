@@ -78,6 +78,9 @@ interface ISSMapProps {
 
 export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   const [issLocation, setIssLocation] = useState<ISSLocationData>(initialLocation);
+  // Instrumentación efímera para QA visual: solo en un Preview de este proyecto.
+  const [previewQaEnabled, setPreviewQaEnabled] = useState(false);
+  const [qaVisibility, setQaVisibility] = useState<"daylight" | "eclipsed" | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [mapError, setMapError] = useState(false);
@@ -92,6 +95,13 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   const [followISS, setFollowISS] = useState<boolean>(true);
   // Estado para mostrar detalles técnicos adicionales
   const [showTechnicalDetails, setShowTechnicalDetails] = useState<boolean>(false);
+
+  useEffect(() => {
+    setPreviewQaEnabled(
+      window.location.hostname.endsWith(".space-people-counter.pages.dev") &&
+      new URLSearchParams(window.location.search).get("qaTheme") === "1"
+    );
+  }, []);
 
   const usingFallback = issLocation.isFallback === true || issLocation.message.includes("simulated");
 
@@ -141,7 +151,9 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
   // Presentar una única medición orbital validada en panel y popup.
   const orbitalSpeedDisplay = formatOrbitalSpeed(issLocation);
   const altitudeKm = issLocation?.altitude || 408;
-  const visibility = issLocation?.visibility || "unknown";
+  const visibility = previewQaEnabled && qaVisibility
+    ? qaVisibility
+    : issLocation?.visibility || "unknown";
   const footprint = issLocation?.footprint;
 
   // Calcular si está en el día o en la noche según el valor de visibilidad de la API
@@ -234,6 +246,15 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
               </div>
             </div>
           </div>
+
+          {previewQaEnabled && (
+            <div data-testid="qa-iss-visibility" className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-yellow-500/40 bg-yellow-950/30 p-2 text-xs text-yellow-100">
+              <span>QA Preview · iluminación simulada:</span>
+              <Button size="sm" variant="outline" onClick={() => setQaVisibility("daylight")}>Día</Button>
+              <Button size="sm" variant="outline" onClick={() => setQaVisibility("eclipsed")}>Noche</Button>
+              <Button size="sm" variant="outline" onClick={() => setQaVisibility(null)}>Real</Button>
+            </div>
+          )}
 
           {/* Información de coordenadas en versión móvil (antes del mapa) */}
           <div className={`md:hidden grid grid-cols-2 gap-2 mb-4 ${expandedInfo ? "block" : "hidden"}`}>
