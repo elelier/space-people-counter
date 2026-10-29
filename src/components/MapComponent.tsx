@@ -175,39 +175,39 @@ export default function MapComponent({
   const mapZoom = isMobile ? 2 : 3;
 
   return (
-    <MapContainer
-      center={[latitude, longitude]}
-      zoom={mapZoom}
-      minZoom={2}
-      scrollWheelZoom={false}
-      style={{ height: mapHeight, width: "100%" }}
-      className="z-0 bg-blue-950"
-      attributionControl={true}
-    >
-      <TileLayer
-        key={isNightTime ? "night" : "day"}
-        attribution={getMapTileAttribution()}
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        className={isNightTime ? "iss-map-tiles-night" : undefined}
-      />
-      <Marker position={[latitude, longitude]} icon={SpaceStationIcon}>
-        <Popup className="iss-popup">
-          <div className="text-center p-1">
-            <div className="font-bold mb-2 text-blue-800 text-sm">Estación Espacial Internacional</div>
-            <div className="space-y-1 text-xs">
-              <div><span className="font-medium">Ubicación:</span> {parseFloat(latitude.toFixed(4))}°, {parseFloat(longitude.toFixed(4))}°</div>
-              <div><span className="font-medium">Velocidad orbital:</span> {orbitalSpeedDisplay}</div>
-              <div><span className="font-medium">Altitud:</span> ~{Math.round(altitude)} km</div>
-              <div><span className="font-medium">Visibilidad:</span> {visibility === "daylight" ? "Diurna" : (visibility === "eclipsed" ? "Nocturna" : "Desconocida")}</div>
+    <div className={isNightTime ? "iss-map-tiles-night" : undefined}>
+      <MapContainer
+        center={[latitude, longitude]}
+        zoom={mapZoom}
+        minZoom={2}
+        scrollWheelZoom={false}
+        style={{ height: mapHeight, width: "100%" }}
+        className="z-0 bg-blue-950"
+        attributionControl={true}
+      >
+        <TileLayer
+          attribution={getMapTileAttribution()}
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={[latitude, longitude]} icon={SpaceStationIcon}>
+          <Popup className="iss-popup">
+            <div className="text-center p-1">
+              <div className="font-bold mb-2 text-blue-800 text-sm">Estación Espacial Internacional</div>
+              <div className="space-y-1 text-xs">
+                <div><span className="font-medium">Ubicación:</span> {parseFloat(latitude.toFixed(4))}°, {parseFloat(longitude.toFixed(4))}°</div>
+                <div><span className="font-medium">Velocidad orbital:</span> {orbitalSpeedDisplay}</div>
+                <div><span className="font-medium">Altitud:</span> ~{Math.round(altitude)} km</div>
+                <div><span className="font-medium">Visibilidad:</span> {visibility === "daylight" ? "Diurna" : (visibility === "eclipsed" ? "Nocturna" : "Desconocida")}</div>
+              </div>
+              {!isMobile && (
+                <div className="text-xs mt-2 text-gray-500">Orbita la Tierra cada ~90 minutos</div>
+              )}
             </div>
-            {!isMobile && (
-              <div className="text-xs mt-2 text-gray-500">Orbita la Tierra cada ~90 minutos</div>
-            )}
-          </div>
-        </Popup>
-      </Marker>
-      <GridLines visible={showGrid} />
-      <ChangeView latitude={latitude} longitude={longitude} followISS={followISS} onExplore={onExplore} />
-    </MapContainer>
+          </Popup>
+        </Marker>
+        <GridLines visible={showGrid} />
+        <ChangeView latitude={latitude} longitude={longitude} followISS={followISS} onExplore={onExplore} />
+      </MapContainer>
+    </div>
   );
 }

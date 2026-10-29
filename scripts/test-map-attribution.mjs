@@ -36,8 +36,8 @@ test('the ISS map uses the canonical OSM tile service for both themes', () => {
 
   assert.match(map, /url="https:\/\/tile\.openstreetmap\.org\/\{z\}\/\{x\}\/\{y\}\.png"/);
   assert.match(map, /const isNightTime = visibility === "eclipsed"/);
-  assert.match(map, /key=\{isNightTime \? "night" : "day"\}/);
-  assert.match(map, /className=\{isNightTime \? "iss-map-tiles-night" : undefined\}/);
+  assert.match(map, /<div className=\{isNightTime \? "iss-map-tiles-night" : undefined\}>/);
+  assert.doesNotMatch(map, /key=\{isNightTime \? "night" : "day"\}/);
   assert.match(map, /attribution=\{getMapTileAttribution\(\)\}/);
   assert.doesNotMatch(map, /cartodb|cartocdn|dark_all|API_KEY/i);
 });
