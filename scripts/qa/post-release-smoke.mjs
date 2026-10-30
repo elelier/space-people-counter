@@ -31,6 +31,8 @@ await check('homepage HTTP and HTML', async () => {
   assert.match(html, /¿Cuántas personas hay en el espacio ahora\?/);
   assert.match(html, /<title>/i);
   assert.match(html, /spacepeople\.elelier\.com/);
+  assert.match(html, /property="og:image"/i);
+  assert.match(html, /rel="canonical"/i);
 });
 await check('Cloudflare API /api/space-people contract', async () => {
   const response = await httpGet('/api/space-people');
@@ -89,11 +91,36 @@ try {
     await page.locator('.leaflet-control-attribution').first().waitFor();
     const attribution = await page.locator('.leaflet-control-attribution').first().innerText();
     assert.match(attribution, /OpenStreetMap/i);
+    // Leaflet DOM alone can be present while tile downloads are broken.
+    const loadedTile = page.locator('img.leaflet-tile-loaded').first();
+    await loadedTile.waitFor({ timeout: 20000 });
+    assert.ok(await loadedTile.evaluate(img => img.complete && img.naturalWidth > 0), 'map tile image did not load');
+    await page.locator('#misiones').first().waitFor();
+    await page.locator('#historial').first().waitFor();
     await page.locator('[aria-live="polite"][aria-busy="false"]').first().waitFor({ timeout: 20000 });
     const number = Number((await page.locator('[aria-live="polite"][aria-busy="false"]').first().innerText()).trim());
     if (livePeople) assert.equal(number, livePeople.number);
     await page.screenshot({ path: SCREENSHOTS_DIR + '/desktop-production.png', fullPage: true });
     assert.deepEqual(errors, [], 'Uncaught JavaScript page errors');
+  });
+  await check('counter initial zero before API response (controlled latency)', async () => {
+    assert.ok(livePeople, 'requires validated production roster fixture');
+    const zeroContext = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    try {
+      await zeroContext.route('**/api/space-people', async route => {
+        await new Promise(resolve => setTimeout(resolve, 2200));
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(livePeople) });
+      });
+      await zeroContext.route(/google-analytics\\.com|googletagmanager\\.com|\\/g\\/collect/, route => route.abort('blockedbyclient'));
+      const zeroPage = await zeroContext.newPage();
+      await zeroPage.goto(BASE_URL + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+      const counter = zeroPage.locator('[aria-live="polite"][aria-busy="true"]').first();
+      await counter.waitFor({ timeout: 7000 });
+      assert.equal((await counter.innerText()).trim(), '0');
+      await zeroPage.locator('[aria-live="polite"][aria-busy="false"]').first().waitFor({ timeout: 15000 });
+    } finally {
+      await zeroContext.close();
+    }
   });
   await check('map drag pauses follow and resume works', async () => {
     const map = page.locator('.leaflet-container').first();
