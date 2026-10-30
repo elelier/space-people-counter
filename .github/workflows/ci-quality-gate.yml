@@ -1,0 +1,65 @@
+name: CI Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-quality-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  readiness:
+    name: Security, lint, type-check, contracts and static build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Clean install from locked dependencies
+        run: npm ci
+
+      - name: Security audit (block high/critical)
+        run: npm audit --audit-level=high
+
+      - name: Validate static API contracts
+        run: |
+          npm run check:space-people-sources
+          npm run check:api-contract
+
+      - name: Validate TypeScript and lint
+        run: |
+          npm run type-check
+          npm run lint
+
+      - name: All regression tests
+        run: |
+          npm run test:space-people-runtime
+          npm run test:counter-delta
+          npm run test:historical-dates
+          npm run test:map-attribution
+          npm run test:map-navigation
+          npm run test:map-follow
+          npm run test:orbital-speed
+          npm run test:share
+
+      - name: Build static Cloudflare Pages output
+        run: |
+          npm run build
+          test -f out/index.html
+          test -f out/robots.txt
+          test -f out/sitemap.xml
