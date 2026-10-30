@@ -53,8 +53,6 @@
     "@eslint/eslintrc": "^3.3.1"
   },
   "overrides": {
-    "next": {
-      "postcss": "^8.5.32"
-    }
+    "postcss": "^8.5.32"
   }
 }
