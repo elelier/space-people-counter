@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit dependencies (high/critical gate)
+        run: npm audit --audit-level=high
+
       - name: Space people source and edge-cache checks
         run: |
           npm run check:space-people-sources
