@@ -67,7 +67,7 @@ await check('robots.txt and sitemap.xml', async () => {
   const sitemap = await (await httpGet('/sitemap.xml')).text();
   assert.match(robots, /sitemap\.xml/i);
   assert.match(robots, /disallow:\s*\/api\//i);
-  assert.match(sitemap, /https:\/\/spacepeople\.elelier\.com\//i);
+  assert.match(sitemap, /<loc>https:\/\/spacepeople\.elelier\.com\/?<\/loc>/i);
 });
 
 await mkdir(SCREENSHOTS_DIR, { recursive: true });
