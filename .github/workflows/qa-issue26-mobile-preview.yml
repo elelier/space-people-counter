@@ -1,0 +1,43 @@
+name: QA Issue 26 Mobile ISS Preview (temporary)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/qa/mobile-iss-telemetry-preview.mjs"
+      - ".github/workflows/qa-issue26-mobile-preview.yml"
+      - "src/components/ISSMap.tsx"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-preview:
+    name: Mobile ISS telemetry interactive acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install project
+        run: npm ci
+      - name: Install isolated Playwright (no lockfile mutation)
+        run: npm install --no-save --package-lock=false --ignore-scripts @playwright/test@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run interactive browser checks against Cloudflare Preview
+        env:
+          PREVIEW_URL: https://feat-issue-26-mobile-iss-tel.space-people-counter.pages.dev
+        run: node scripts/qa/mobile-iss-telemetry-preview.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-26-mobile-preview-screenshots
+          path: qa-artifacts/issue-26/
+          if-no-files-found: warn
+          retention-days: 7
