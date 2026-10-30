@@ -162,7 +162,7 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
 
   // Alternar la visualización de información adicional en dispositivos móviles
   const toggleInfo = () => {
-    setExpandedInfo(!expandedInfo);
+    setExpandedInfo((previous) => !previous);
   };
 
   // Alternar la visualización de datos curiosos
@@ -235,19 +235,6 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
             </div>
           </div>
 
-          {/* Información de coordenadas en versión móvil (antes del mapa) */}
-          <div className={`md:hidden grid grid-cols-2 gap-2 mb-4 ${expandedInfo ? "block" : "hidden"}`}>
-            <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
-              <div className="text-blue-300 text-xs mb-1">Latitud</div>
-              <div className="text-white font-bold text-sm">{latitude.toFixed(4)}°</div>
-            </div>
-
-            <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
-              <div className="text-blue-300 text-xs mb-1">Longitud</div>
-              <div className="text-white font-bold text-sm">{longitude.toFixed(4)}°</div>
-            </div>
-          </div>
-
           <div className="rounded-lg overflow-hidden mb-4 sm:mb-6 shadow-xl border border-blue-800/30">
             {mapError ? (
               <div className="w-full h-[300px] sm:h-[400px] bg-blue-900/50 flex items-center justify-center text-white">
@@ -296,8 +283,21 @@ export function ISSMap({ initialLocation = defaultISSLocation }: ISSMapProps) {
             )}
           </div>
 
-          {/* Ocultar en móvil si no está expandido */}
-          <div className={`${expandedInfo ? "block" : "hidden"} md:block`}>
+          {/* Mobile-only control: keep ISS telemetry available without changing desktop layout. */}
+          <Button
+            type="button"
+            variant="outline"
+            aria-expanded={expandedInfo}
+            aria-controls="iss-telemetry-panel"
+            onClick={toggleInfo}
+            className="mb-4 min-h-11 w-full justify-between border-blue-700/70 bg-blue-900/30 px-4 text-blue-100 hover:bg-blue-800/40 hover:text-white focus-visible:ring-2 focus-visible:ring-blue-300 md:hidden"
+          >
+            <span>{expandedInfo ? "Ocultar datos ISS" : "Ver datos ISS"}</span>
+            {expandedInfo ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
+          </Button>
+
+          {/* Hide telemetry on mobile until requested; keep it visible on desktop. */}
+          <div id="iss-telemetry-panel" className={`${expandedInfo ? "block" : "hidden"} md:block`}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
               <div className="bg-blue-900/30 rounded-lg p-3 backdrop-blur-sm">
                 <div className="text-blue-300 text-xs mb-1">Latitud</div>
