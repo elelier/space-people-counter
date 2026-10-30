@@ -111,7 +111,7 @@ try {
         await new Promise(resolve => setTimeout(resolve, 2200));
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(livePeople) });
       });
-      await zeroContext.route(/google-analytics\\.com|googletagmanager\\.com|\\/g\\/collect/, route => route.abort('blockedbyclient'));
+      await zeroContext.route(/google-analytics\.com|googletagmanager\.com|\/g\/collect/, route => route.abort('blockedbyclient'));
       const zeroPage = await zeroContext.newPage();
       await zeroPage.goto(BASE_URL + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
       const counter = zeroPage.locator('[aria-live="polite"][aria-busy="true"]').first();
