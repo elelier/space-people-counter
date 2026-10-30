@@ -1,0 +1,59 @@
+name: Temporary dependency lockfile refresh
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  refresh-lock:
+    if: ${{ github.event.pull_request.head.repo.full_name == 'elelier/space-people-counter' && github.head_ref == 'security/next15-react19-dependency-remediation' }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Regenerate lockfile for patched dependencies
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit
+          npm audit fix --package-lock-only --ignore-scripts --no-fund || true
+          npm install --package-lock-only --ignore-scripts --no-audit
+      - name: Commit ONLY regenerated lockfile to source branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: regenerate audited dependency lockfile"
+            git push origin "HEAD:${{ github.head_ref }}"
+          fi
+      - name: Install and verify
+        run: |
+          npm ci
+          npm run lint
+          npm run type-check
+          npm run check:space-people-sources
+          npm run test:space-people-runtime
+          npm run test:counter-delta
+          npm run test:historical-dates
+          npm run test:map-attribution
+          npm run test:map-navigation
+          npm run test:map-follow
+          npm run test:orbital-speed
+          npm run test:share
+          npm run check:api-contract
+          npm run build
+      - name: Audit final dependencies
+        if: always()
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e "const a=require('/tmp/npm-audit.json'); console.log(JSON.stringify({vulnerabilities:a.metadata?.vulnerabilities, packages:Object.keys(a.vulnerabilities||{})},null,2))"
+          npm audit --omit=dev --audit-level=high
