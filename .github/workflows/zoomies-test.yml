@@ -1,0 +1,20 @@
+name: Zoomies Hello World
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  hello:
+    name: First Ubuntu Runner Test
+    runs-on: spc-pilot
+    timeout-minutes: 5
+
+    steps:
+      - name: Hello World
+        run: |
+          echo "Hello World desde Zoomies!"
+          echo "Runner: $RUNNER_NAME"
+          echo "Sistema operativo: $RUNNER_OS"
+          uname -a
