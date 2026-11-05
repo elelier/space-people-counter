@@ -118,7 +118,7 @@ export function SpaceMilestonesModal({ isOpen, onClose, milestones }: SpaceMiles
                 <HistoricalMilestoneImage
                   key={milestones[selectedMilestone].date}
                   milestone={milestones[selectedMilestone]}
-                />}
+                />
               </div>
             </div>
             <div className="md:w-3/5">
