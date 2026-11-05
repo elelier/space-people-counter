@@ -56,9 +56,12 @@ try {
       await page.waitForFunction(({alt}) => {
         const image = document.querySelector('img[alt="'+alt+'"]');
         const fallback = document.querySelector('[aria-label="Fotografía no disponible: '+alt+'"]');
-        return (image && image.complete) || fallback;
+        return (image && image.complete && image.naturalWidth > 0) || Boolean(fallback);
       }, {alt:names[i]}, {timeout:18000});
-      const loaded=await img.count() && await img.evaluate(el=>el.complete && el.naturalWidth>0);
+      const loaded=await page.evaluate(alt => {
+        const image=document.querySelector('img[alt="'+alt+'"]');
+        return Boolean(image?.complete && image.naturalWidth > 0);
+      }, names[i]);
       const fallback=await modal.getByText('Fotografía no disponible', {exact:true}).isVisible().catch(()=>false);
       console.log((loaded?'[PHOTO OK]':'[PHOTO FALLBACK]')+' '+(i+1)+' '+names[i]+' mobile='+String(width===390));
       if(!loaded && !fallback) failures.push('Image neither loaded nor fallback: '+names[i]);
