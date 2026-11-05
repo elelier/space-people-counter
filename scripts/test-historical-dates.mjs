@@ -102,3 +102,18 @@ test('all history views avoid hardcoded 23 years and stale copyright', () => {
   }
   assert.doesNotMatch(footer, /© 2025/);
 });
+
+
+test('all 12 milestones use source-attributed Commons originals, not broken thumbs', () => {
+  const images = [...milestoneSource.matchAll(/image:\s*"(https:\/\/[^"]+)"/g)].map(match => match[1]);
+  const credits = [...milestoneSource.matchAll(/imageCredit:\s*"([^"]+)"/g)].map(match => match[1]);
+  assert.equal(images.length, 12);
+  assert.equal(credits.length, 12);
+  for (const url of images) {
+    assert.match(url, /^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/[^"]+\.(?:jpg|png)$/i);
+    assert.doesNotMatch(url, /\/thumb\/|\d+px-/);
+  }
+  for (const credit of credits) assert.ok(credit.length >= 10);
+  assert.match(credits[2], /Alexander Mokletsov.*CC BY-SA 3\.0/);
+  assert.match(credits[10], /Shujianyang.*CC BY-SA 4\.0/);
+});
