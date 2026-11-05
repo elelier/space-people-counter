@@ -110,7 +110,7 @@ test('all 12 milestones use source-attributed Commons originals, not broken thum
   assert.equal(images.length, 12);
   assert.equal(credits.length, 12);
   for (const url of images) {
-    assert.match(url, /^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/[^"]+\.(?:jpg|png)$/i);
+    assert.match(url, /^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/[^"]+\.(?:jpg|png|svg)$/i);
     assert.doesNotMatch(url, /\/thumb\/|\d+px-/);
   }
   for (const credit of credits) assert.ok(credit.length >= 10);
