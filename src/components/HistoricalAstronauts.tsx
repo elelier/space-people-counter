@@ -37,6 +37,7 @@ import {
 import { Line, Bar } from 'react-chartjs-2';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { formatHistoricalDate } from '@/lib/formatHistoricalDate';
+import { useContinuousHumanPresenceYears } from '@/hooks/useContinuousHumanPresenceYears';
 
 // Register Chart.js components
 ChartJS.register(
@@ -63,6 +64,7 @@ export function HistoricalAstronauts() {
   const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null);
   const [chartData, setChartData] = useState<ChartDataSet | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const yearsInSpace = useContinuousHumanPresenceYears();
 
   // Chart options
   const chartOptions: ChartOptions<'line' | 'bar'> = {
@@ -282,8 +284,8 @@ export function HistoricalAstronauts() {
           <div className="bg-blue-900/30 backdrop-blur-sm rounded-lg p-4 border border-blue-800/30">
             <div className="text-xs text-blue-300 mb-1">Presencia humana continua en el espacio</div>
             <div className="flex items-baseline">
-              <span className="text-white text-2xl font-bold">23</span>
-              <span className="text-blue-300 text-sm ml-2">Años</span>
+              <span className="text-white text-2xl font-bold">{yearsInSpace ?? "—"}</span>
+              <span className="text-blue-300 text-sm ml-2">años completos · desde el 2 de noviembre de 2000</span>
             </div>
           </div>
         </div>
