@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from 'next/image';
+import { HistoricalMilestoneImage } from '@/components/HistoricalMilestoneImage';
 import {
   yearlyAstronautCounts,
   spaceMilestones,
@@ -37,6 +37,7 @@ import {
 import { Line, Bar } from 'react-chartjs-2';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { formatHistoricalDate } from '@/lib/formatHistoricalDate';
+import { useContinuousHumanPresenceYears } from '@/hooks/useContinuousHumanPresenceYears';
 
 // Register Chart.js components
 ChartJS.register(
@@ -63,6 +64,7 @@ export function HistoricalAstronauts() {
   const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null);
   const [chartData, setChartData] = useState<ChartDataSet | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const yearsInSpace = useContinuousHumanPresenceYears();
 
   // Chart options
   const chartOptions: ChartOptions<'line' | 'bar'> = {
@@ -282,8 +284,8 @@ export function HistoricalAstronauts() {
           <div className="bg-blue-900/30 backdrop-blur-sm rounded-lg p-4 border border-blue-800/30">
             <div className="text-xs text-blue-300 mb-1">Presencia humana continua en el espacio</div>
             <div className="flex items-baseline">
-              <span className="text-white text-2xl font-bold">23</span>
-              <span className="text-blue-300 text-sm ml-2">Años</span>
+              <span className="text-white text-2xl font-bold">{yearsInSpace ?? "—"}</span>
+              <span className="text-blue-300 text-sm ml-2">años completos · desde el 2 de noviembre de 2000</span>
             </div>
           </div>
         </div>
@@ -348,12 +350,9 @@ export function HistoricalAstronauts() {
                     <div className="flex flex-col md:flex-row gap-4 bg-indigo-950/40 rounded-lg p-4">
                       <div className="md:w-1/3">
                         <div className="rounded-lg overflow-hidden h-[200px] bg-indigo-900/30">
-                          <Image
-                            src={spaceMilestones[selectedMilestone].image || ''}
-                            alt={spaceMilestones[selectedMilestone].event}
-                            className="w-full h-full object-cover"
-                            width={400}
-                            height={200}
+                          <HistoricalMilestoneImage
+                            key={spaceMilestones[selectedMilestone].date}
+                            milestone={spaceMilestones[selectedMilestone]}
                           />
                         </div>
                       </div>

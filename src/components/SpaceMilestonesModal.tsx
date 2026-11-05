@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { HistoricalMilestoneImage } from "@/components/HistoricalMilestoneImage";
 import { HistoricalMilestone } from "@/services/historicalAstronautData";
 import { formatHistoricalDate } from "@/lib/formatHistoricalDate";
 
@@ -115,15 +115,10 @@ export function SpaceMilestonesModal({ isOpen, onClose, milestones }: SpaceMiles
           <div className="flex flex-col md:flex-row gap-4 bg-indigo-950/40 rounded-lg p-4 mb-4 card-hover">
             <div className="md:w-2/5">
               <div className="rounded-lg overflow-hidden h-[200px] md:h-[250px] bg-indigo-900/30 relative">
-                {milestones[selectedMilestone].image && (
-                  <Image
-                    src={milestones[selectedMilestone].image || ''}
-                    alt={milestones[selectedMilestone].event}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover logo-hover"
-                  />
-                )}
+                <HistoricalMilestoneImage
+                  key={milestones[selectedMilestone].date}
+                  milestone={milestones[selectedMilestone]}
+                />
               </div>
             </div>
             <div className="md:w-3/5">

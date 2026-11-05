@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useContinuousHumanPresenceYears } from "@/hooks/useContinuousHumanPresenceYears";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import { SpaceMilestonesModal } from './SpaceMilestonesModal';
 
 export function SimpleHistoricalData() {
   const [showMilestonesModal, setShowMilestonesModal] = useState(false);
+  const yearsInSpace = useContinuousHumanPresenceYears();
 
   return (
     <>
@@ -56,8 +58,8 @@ export function SimpleHistoricalData() {
             <div className="bg-blue-900/30 backdrop-blur-sm rounded-lg p-4 border border-blue-800/30 card-hover">
               <div className="text-xs text-blue-300 mb-1">Presencia humana continua en el espacio</div>
               <div className="flex items-baseline">
-                <span className="text-white text-2xl font-bold logo-hover">23</span>
-                <span className="text-blue-300 text-sm ml-2">Años (desde 2000)</span>
+                <span className="text-white text-2xl font-bold logo-hover">{yearsInSpace ?? "—"}</span>
+                <span className="text-blue-300 text-sm ml-2">años completos · desde el 2 de noviembre de 2000</span>
               </div>
             </div>
           </div>
