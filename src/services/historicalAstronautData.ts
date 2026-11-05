@@ -118,7 +118,7 @@ export const spaceMilestones: HistoricalMilestone[] = [
     event: "Primera estación espacial",
     description: "La Unión Soviética lanzó Saliut 1, la primera estación espacial de la historia, a órbita terrestre baja.",
     astronauts: ["Georgy Dobrovolsky", "Viktor Patsayev", "Vladislav Volkov"],
-    image: "https://upload.wikimedia.org/wikipedia/commons/8/83/Salyut_1_and_Soyuz_drawing.png",
+    image: "https://upload.wikimedia.org/wikipedia/commons/1/19/RP1357_p64_Salyut_1.svg",
     imageCredit: "NASA · Dominio público (ilustración)"
   },
   {
