@@ -38,9 +38,10 @@ export function HistoricalMilestoneImage({ milestone }: { milestone: HistoricalM
           href={sourcePage}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-2 right-2 rounded bg-blue-950/85 px-2 py-1 text-xs text-blue-100 underline underline-offset-2 hover:bg-blue-900"
+          aria-label={`Fuente y licencia: ${milestone.imageCredit ?? "Wikimedia Commons"}`}
+          className="absolute bottom-2 right-2 max-w-[calc(100%-1rem)] rounded bg-blue-950/90 px-2 py-1 text-[10px] leading-snug text-blue-100 underline underline-offset-2 hover:bg-blue-900"
         >
-          Fuente y licencia
+          {milestone.imageCredit ?? "Wikimedia Commons · Ver fuente y licencia"}
         </a>
       )}
     </div>
