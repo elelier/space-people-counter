@@ -49,7 +49,7 @@ export default function Home() {
       <div className="py-8 border-t border-opacity-20 border-blue-400 bg-black/30 backdrop-blur-sm">
         <div className="container mx-auto px-4 text-center">
           <p key="footer-credit" className="text-gray-300 text-sm">
-            © 2025 Space People Counter | Desarrollado por <a href="https://www.elelier.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline transition-colors">elelier</a> con ❤️ para explorar el espacio
+            © Space People Counter | Desarrollado por <a href="https://www.elelier.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline transition-colors">elelier</a> con ❤️ para explorar el espacio
           </p>
           <div className="flex justify-center mt-4">
             {/* Direct Ko-fi button without component */}
