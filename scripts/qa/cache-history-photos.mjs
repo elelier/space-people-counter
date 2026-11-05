@@ -43,14 +43,26 @@ async function download(original, number) {
   throw new Error('Cannot retrieve milestone '+number+' from Wikimedia or archival mirror: '+original);
 }
 
-const buffers=[];
+const failures=[];
+let saved=0;
 for(let i=0;i<urls.length;i++) {
-  buffers.push(await download(urls[i],i+1));
-  await sleep(1000);
-}
-// Atomic: don't commit a partially downloaded catalog.
-for(let i=0;i<buffers.length;i++) {
   const target='public/images/history/'+String(i+1).padStart(2,'0')+'.webp';
-  await writeFile(target,buffers[i]);
+  if(existsSync(target)) {
+    console.log('SOURCE '+(i+1)+' already archived; skipping');
+    continue;
+  }
+  try {
+    const bytes=await download(urls[i],i+1);
+    await writeFile(target,bytes);
+    saved++;
+  } catch(error) {
+    console.error('SOURCE '+(i+1)+' FAILED: '+error.message);
+    failures.push(i+1);
+  }
+  await sleep(1500);
 }
-console.log('PASS: all 12 milestone photos saved locally, total '+(buffers.reduce((n,b)=>n+b.length,0)/1024).toFixed(0)+' KB');
+console.log('IMPORT: '+saved+' new photos, missing milestone IDs: '+JSON.stringify(failures));
+if(failures.length) {
+  console.error('Partial import; feature PR must remain draft. Retry missing images.');
+  process.exitCode=1;
+} else console.log('PASS: all 12 milestone photos present in feature branch');
