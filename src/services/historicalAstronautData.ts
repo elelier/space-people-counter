@@ -74,82 +74,82 @@ export const yearlyAstronautCounts: YearlyAstronautData[] = [
 export const spaceMilestones: HistoricalMilestone[] = [
   {
     date: "1961-04-12",
-    event: "First human in space",
-    description: "Yuri Gagarin became the first human to journey into outer space when his Vostok spacecraft completed one orbit of Earth.",
+    event: "Primer ser humano en el espacio",
+    description: "Yuri Gagarin fue el primer ser humano en viajar al espacio. A bordo de Vostok 1, completó una órbita alrededor de la Tierra.",
     astronauts: ["Yuri Gagarin"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Yuri_Gagarin_%28cropped%29.jpg/800px-Yuri_Gagarin_%28cropped%29.jpg"
   },
   {
     date: "1961-05-05",
-    event: "First American in space",
-    description: "Alan Shepard became the first American in space during a suborbital flight aboard Freedom 7.",
+    event: "Primer estadounidense en el espacio",
+    description: "Alan Shepard fue el primer estadounidense en llegar al espacio durante un vuelo suborbital a bordo de Freedom 7.",
     astronauts: ["Alan Shepard"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Alan_Shepard_astronaut_in_spacesuit.jpg/800px-Alan_Shepard_astronaut_in_spacesuit.jpg"
   },
   {
     date: "1963-06-16",
-    event: "First woman in space",
-    description: "Valentina Tereshkova became the first woman in space aboard Vostok 6.",
+    event: "Primera mujer en el espacio",
+    description: "Valentina Tereshkova se convirtió en la primera mujer en viajar al espacio a bordo de Vostok 6.",
     astronauts: ["Valentina Tereshkova"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/RIAN_archive_612748_Valentina_Tereshkova.jpg/800px-RIAN_archive_612748_Valentina_Tereshkova.jpg"
   },
   {
     date: "1965-03-18",
-    event: "First spacewalk",
-    description: "Alexei Leonov conducted the first spacewalk, or EVA (Extra-Vehicular Activity), from the Voskhod 2 spacecraft.",
+    event: "Primera caminata espacial",
+    description: "Alexéi Leónov realizó la primera caminata espacial (actividad extravehicular) desde la nave Vosjod 2.",
     astronauts: ["Alexei Leonov"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Alexey_Leonov%2C_1974_%28cropped%29.jpg/800px-Alexey_Leonov%2C_1974_%28cropped%29.jpg"
   },
   {
     date: "1969-07-20",
-    event: "First humans on the Moon",
-    description: "Neil Armstrong and Buzz Aldrin became the first humans to walk on the Moon during the Apollo 11 mission.",
+    event: "Primeros seres humanos en la Luna",
+    description: "Neil Armstrong y Buzz Aldrin fueron los primeros seres humanos en caminar sobre la Luna durante la misión Apolo 11.",
     astronauts: ["Neil Armstrong", "Buzz Aldrin"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Buzz_salutes_the_U.S._Flag.jpg/800px-Buzz_salutes_the_U.S._Flag.jpg"
   },
   {
     date: "1971-04-19",
-    event: "First space station",
-    description: "The Soviet Union launched Salyut 1, the world's first space station, into low Earth orbit.",
+    event: "Primera estación espacial",
+    description: "La Unión Soviética lanzó Saliut 1, la primera estación espacial de la historia, a órbita terrestre baja.",
     astronauts: ["Georgy Dobrovolsky", "Viktor Patsayev", "Vladislav Volkov"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Salyut_1_and_Soyuz_11.jpg/800px-Salyut_1_and_Soyuz_11.jpg"
   },
   {
     date: "1973-05-14",
-    event: "First American space station",
-    description: "Skylab, the first American space station, was launched into orbit.",
+    event: "Primera estación espacial estadounidense",
+    description: "Skylab, la primera estación espacial estadounidense, fue lanzada a órbita.",
     astronauts: ["Charles Conrad", "Paul Weitz", "Joseph Kerwin"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Skylab_%28SL-4%29.jpg/800px-Skylab_%28SL-4%29.jpg"
   },
   {
     date: "1986-02-20",
-    event: "Mir space station begins",
-    description: "The Soviet Union launched the core module of the Mir space station, which would remain in orbit for 15 years.",
+    event: "Inicio de la estación espacial Mir",
+    description: "La Unión Soviética lanzó el módulo central de la estación Mir, que permaneció en órbita durante 15 años.",
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Mir_space_station_12_June_1998.jpg/800px-Mir_space_station_12_June_1998.jpg"
   },
   {
     date: "1998-11-20",
-    event: "ISS construction begins",
-    description: "The first module of the International Space Station, Zarya, was launched into orbit.",
+    event: "Comienza la construcción de la EEI",
+    description: "Se lanzó a órbita Zaryá, el primer módulo de la Estación Espacial Internacional (EEI).",
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/ISS_Zarya_module.jpg/800px-ISS_Zarya_module.jpg"
   },
   {
     date: "2000-11-02",
-    event: "ISS continuously occupied",
-    description: "The first long-duration crew, Expedition 1, arrived at the ISS, beginning continuous human presence in space that continues today.",
+    event: "Ocupación continua de la EEI",
+    description: "La Expedición 1 llegó a la EEI y comenzó una presencia humana ininterrumpida en el espacio que continúa hasta hoy.",
     astronauts: ["William Shepherd", "Yuri Gidzenko", "Sergei Krikalev"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/ISS_Expedition_1_crew.jpg/800px-ISS_Expedition_1_crew.jpg"
   },
   {
     date: "2021-04-24",
-    event: "Chinese space station begins",
-    description: "China launched the core module of its Tiangong space station.",
+    event: "Inicio de la estación espacial china",
+    description: "China lanzó el módulo central de su estación espacial Tiangong.",
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Tianhe_Core_Module.jpg/800px-Tianhe_Core_Module.jpg"
   },
   {
     date: "2022-05-21",
-    event: "First all-private astronaut mission",
-    description: "Axiom Mission 1 became the first all-private astronaut mission to the ISS.",
+    event: "Primera misión privada de astronautas a la EEI",
+    description: "Axiom Mission 1 se convirtió en la primera misión de astronautas íntegramente privada a la EEI.",
     astronauts: ["Michael López-Alegría", "Larry Connor", "Mark Pathy", "Eytan Stibbe"],
     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Axiom_Mission_1_Crew_Portrait_%28NHQ202205230001%29.jpg/800px-Axiom_Mission_1_Crew_Portrait_%28NHQ202205230001%29.jpg"
   }
