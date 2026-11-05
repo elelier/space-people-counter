@@ -1,0 +1,21 @@
+name: Historical image source research (temporary)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/qa/check-milestone-images.mjs"
+      - ".github/workflows/qa-historical-images.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Probe milestone photos and candidate sources
+        run: node scripts/qa/check-milestone-images.mjs
