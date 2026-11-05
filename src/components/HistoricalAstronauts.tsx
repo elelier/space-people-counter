@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from 'next/image';
+import { HistoricalMilestoneImage } from '@/components/HistoricalMilestoneImage';
 import {
   yearlyAstronautCounts,
   spaceMilestones,
@@ -350,12 +350,9 @@ export function HistoricalAstronauts() {
                     <div className="flex flex-col md:flex-row gap-4 bg-indigo-950/40 rounded-lg p-4">
                       <div className="md:w-1/3">
                         <div className="rounded-lg overflow-hidden h-[200px] bg-indigo-900/30">
-                          <Image
-                            src={spaceMilestones[selectedMilestone].image || ''}
-                            alt={spaceMilestones[selectedMilestone].event}
-                            className="w-full h-full object-cover"
-                            width={400}
-                            height={200}
+                          <HistoricalMilestoneImage
+                            key={spaceMilestones[selectedMilestone].date}
+                            milestone={spaceMilestones[selectedMilestone]}
                           />
                         </div>
                       </div>
