@@ -1,0 +1,42 @@
+name: Import optimized historical milestone photos (temporary)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/qa-history-image-import.yml"
+      - "scripts/qa/cache-history-photos.mjs"
+permissions:
+  contents: write
+concurrency:
+  group: temporary-history-asset-import
+  cancel-in-progress: true
+jobs:
+  import:
+    if: github.repository == 'elelier/space-people-counter' && github.event.pull_request.head.repo.full_name == 'elelier/space-people-counter' && github.event.pull_request.head.ref == 'fix/historical-milestones-es-images-duration'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/historical-milestones-es-images-duration
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Ensure image transcoder is available
+        run: node -e "require('sharp')" || npm install --no-save --package-lock=false sharp@0.34.3
+      - name: Download verified public sources and generate local WebP files
+        run: node scripts/qa/cache-history-photos.mjs
+      - name: Commit binary images ONLY on feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/images/history/
+          if git diff --cached --quiet; then
+            echo "No image asset changes."
+          else
+            git commit -m "assets(history): self-host 12 optimized milestone images (#22)"
+            git push origin HEAD:refs/heads/fix/historical-milestones-es-images-duration
+          fi
